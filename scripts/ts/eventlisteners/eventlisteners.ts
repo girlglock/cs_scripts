@@ -3,2359 +3,618 @@
 // requires the maps/prefabs/eventlisteners.vmap prefab
 // (if not worky paste the ents into main map since hammer likes to alter the targetnames inside prefabs)
 //
-// see scripts/ts/game_events_test.ts for examples
+// example: import { OnPlayerDeath, OnRoundStart } from './eventlisteners';
 
 import { Instance as css } from "cs_script/point_script";
 
-interface GameEventDefs {
-    server_spawn: {
-        hostname: string;
-        address: string;
-        port: number;
-        game: string;
-        mapname: string;
-        addonname: string;
-        maxplayers: number;
-        os: string;
-        dedicated: boolean;
-        password: boolean;
-    };
-    server_pre_shutdown: {
-        reason: string;
-    };
-    server_shutdown: {
-        reason: string;
-    };
-    server_message: {
-        text: string;
-    };
-    server_cvar: {
-        cvarname: string;
-        cvarvalue: string;
-    };
-    player_activate: {
-        userid: number;
-    };
-    player_connect_full: {
-        userid: number;
-    };
-    player_full_update: {
-        userid: number;
-        count: number;
-    };
-    player_connect: {
-        name: string;
-        userid: number;
-        networkid: string;
-        xuid: string;
-        address: string;
-        bot: boolean;
-    };
-    player_disconnect: {
-        userid: number;
-        reason: number;
-        name: string;
-        networkid: string;
-        xuid: string;
-        PlayerID: number;
-    };
-    player_info: {
-        name: string;
-        userid: number;
-        steamid: string;
-        bot: boolean;
-    };
-    player_spawn: {
-        userid: number;
-        userid_pawn: number;
-    };
-    player_team: {
-        userid: number;
-        team: number;
-        oldteam: number;
-        disconnect: boolean;
-        silent: boolean;
-        isbot: boolean;
-        userid_pawn: number;
-    };
-    local_player_team: {};
-    local_player_controller_team: {};
-    player_changename: {
-        userid: number;
-        oldname: string;
-        newname: string;
-    };
-    player_hurt: {
-        userid: number;
-        attacker: number;
-        health: number;
-        armor: number;
-        weapon: string;
-        dmg_health: number;
-        dmg_armor: number;
-        hitgroup: number;
-        userid_pawn: number;
-        attacker_pawn: number;
-    };
-    local_player_pawn_changed: {};
-    player_stats_updated: {
-        forceupload: boolean;
-    };
-    player_death: {
-        userid: number;
-        attacker: number;
-        assister: number;
-        assistedflash: boolean;
-        weapon: string;
-        weapon_itemid: string;
-        weapon_fauxitemid: string;
-        weapon_originalowner_xuid: string;
-        headshot: boolean;
-        dominated: number;
-        revenge: number;
-        wipe: number;
-        penetrated: number;
-        noreplay: boolean;
-        noscope: boolean;
-        thrusmoke: boolean;
-        attackerblind: boolean;
-        distance: number;
-        userid_pawn: number;
-        attacker_pawn: number;
-        assister_pawn: number;
-        dmg_health: number;
-        dmg_armor: number;
-        hitgroup: number;
-        attackerinair: boolean;
-    };
-    player_footstep: {
-        userid: number;
-        userid_pawn: number;
-    };
-    player_hintmessage: {
-        hintmessage: string;
-    };
-    player_spawned: {
-        userid: number;
-        inrestart: boolean;
-        userid_pawn: number;
-    };
-    player_jump: {
-        userid: number;
-    };
-    player_blind: {
-        userid: number;
-        attacker: number;
-        entityid: number;
-        blind_duration: number;
-    };
-    player_falldamage: {
-        userid: number;
-        damage: number;
-        userid_pawn: number;
-    };
-    player_score: {
-        userid: number;
-        kills: number;
-        deaths: number;
-        score: number;
-    };
-    player_shoot: {
-        userid: number;
-        weapon: number;
-        mode: number;
-        userid_pawn: number;
-    };
-    player_radio: {
-        splitscreenplayer: number;
-        userid: number;
-        slot: number;
-        userid_pawn: number;
-    };
-    player_avenged_teammate: {
-        avenger_id: number;
-        avenged_player_id: number;
-    };
-    player_reset_vote: {
-        userid: number;
-        vote: boolean;
-    };
-    player_given_c4: {
-        userid: number;
-    };
-    player_ping: {
-        splitscreenplayer: number;
-        userid: number;
-        entityid: number;
-        x: number;
-        y: number;
-        z: number;
-        urgent: boolean;
-        userid_pawn: number;
-    };
-    player_ping_stop: {
-        entityid: number;
-    };
-    player_sound: {
-        userid: number;
-        radius: number;
-        duration: number;
-        step: boolean;
-        userid_pawn: number;
-    };
-    teamplay_broadcast_audio: {
-        team: number;
-        sound: string;
-    };
-    team_info: {
-        teamid: number;
-        teamname: string;
-    };
-    team_score: {
-        teamid: number;
-        score: number;
-    };
-    teamplay_round_start: {
-        full_reset: boolean;
-    };
-    team_intro_start: {};
-    team_intro_end: {};
-    round_start: {
-        timelimit: number;
-        fraglimit: number;
-        objective: string;
-    };
-    round_end: {
-        winner: number;
-        reason: number;
-        message: string;
-        legacy: number;
-        player_count: number;
-        nomusic: number;
-    };
-    round_start_pre_entity: {};
-    round_start_post_nav: {};
-    round_freeze_end: {};
-    round_prestart: {};
-    round_poststart: {};
-    round_announce_match_point: {};
-    round_announce_final: {};
-    round_announce_last_round_half: {};
-    round_announce_match_start: {};
-    round_announce_warmup: {};
-    round_end_upload_stats: {};
-    round_officially_ended: {};
-    round_time_warning: {};
-    round_mvp: {
-        userid: number;
-        reason: number;
-        value: number;
-        musickitmvps: number;
-        nomusic: number;
-        musickitid: number;
-    };
-    game_init: {};
-    game_start: {
-        roundslimit: number;
-        timelimit: number;
-        fraglimit: number;
-        objective: string;
-    };
-    game_end: {
-        winner: number;
-    };
-    game_message: {
-        target: number;
-        text: string;
-    };
-    game_newmap: {
-        mapname: string;
-    };
-    game_phase_changed: {
-        new_phase: number;
-    };
-    hltv_cameraman: {
-        userid: number;
-    };
-    hltv_chase: {
-        target1: number;
-        target2: number;
-        distance: number;
-        theta: number;
-        phi: number;
-        inertia: number;
-        ineye: number;
-    };
-    hltv_rank_camera: {
-        index: number;
-        rank: number;
-        target: number;
-    };
-    hltv_rank_entity: {
-        userid: number;
-        rank: number;
-        target: number;
-    };
-    hltv_fixed: {
-        posx: number;
-        posy: number;
-        posz: number;
-        theta: number;
-        phi: number;
-        offset: number;
-        fov: number;
-        target: number;
-    };
-    hltv_message: {
-        text: string;
-    };
-    hltv_status: {
-        clients: number;
-        slots: number;
-        proxies: number;
-        master: string;
-    };
-    hltv_title: {
-        text: string;
-    };
-    hltv_chat: {
-        text: string;
-        steamID: string;
-    };
-    hltv_versioninfo: {
-        version: number;
-    };
-    hltv_replay: {
-        delay: number;
-        reason: number;
-    };
-    hltv_changed_mode: {
-        oldmode: number;
-        newmode: number;
-        obs_target: number;
-    };
-    hltv_replay_status: {
-        reason: number;
-    };
-    demo_start: {};
-    demo_stop: {};
-    demo_skip: {
-        playback_tick: number;
-        skipto_tick: number;
-    };
-    map_shutdown: {};
-    map_transition: {};
-    hostname_changed: {
-        hostname: string;
-    };
-    difficulty_changed: {
-        newDifficulty: number;
-        oldDifficulty: number;
-        strDifficulty: string;
-    };
-    weapon_fire: {
-        userid: number;
-        weapon: string;
-        silenced: boolean;
-        userid_pawn: number;
-    };
-    weapon_fire_on_empty: {
-        userid: number;
-        weapon: string;
-        userid_pawn: number;
-    };
-    weapon_outofammo: {
-        userid: number;
-        userid_pawn: number;
-    };
-    weapon_reload: {
-        userid: number;
-        userid_pawn: number;
-    };
-    weapon_zoom: {
-        userid: number;
-        userid_pawn: number;
-    };
-    weapon_zoom_rifle: {
-        userid: number;
-        userid_pawn: number;
-    };
-    grenade_thrown: {
-        userid: number;
-        weapon: string;
-        userid_pawn: number;
-    };
-    grenade_bounce: {
-        userid: number;
-        userid_pawn: number;
-    };
-    hegrenade_detonate: {
-        userid: number;
-        entityid: number;
-        x: number;
-        y: number;
-        z: number;
-        userid_pawn: number;
-    };
-    flashbang_detonate: {
-        userid: number;
-        entityid: number;
-        x: number;
-        y: number;
-        z: number;
-        userid_pawn: number;
-    };
-    smokegrenade_detonate: {
-        userid: number;
-        entityid: number;
-        x: number;
-        y: number;
-        z: number;
-        userid_pawn: number;
-    };
-    smokegrenade_expired: {
-        userid: number;
-        entityid: number;
-        x: number;
-        y: number;
-        z: number;
-        userid_pawn: number;
-    };
-    molotov_detonate: {
-        userid: number;
-        x: number;
-        y: number;
-        z: number;
-        userid_pawn: number;
-    };
-    decoy_detonate: {
-        userid: number;
-        entityid: number;
-        x: number;
-        y: number;
-        z: number;
-        userid_pawn: number;
-    };
-    decoy_started: {
-        userid: number;
-        entityid: number;
-        x: number;
-        y: number;
-        z: number;
-        userid_pawn: number;
-    };
-    decoy_firing: {
-        userid: number;
-        entityid: number;
-        x: number;
-        y: number;
-        z: number;
-        userid_pawn: number;
-    };
-    tagrenade_detonate: {
-        userid: number;
-        entityid: number;
-        x: number;
-        y: number;
-        z: number;
-    };
-    inferno_startburn: {
-        entityid: number;
-        x: number;
-        y: number;
-        z: number;
-    };
-    inferno_expire: {
-        entityid: number;
-        x: number;
-        y: number;
-        z: number;
-    };
-    inferno_extinguish: {
-        entityid: number;
-        x: number;
-        y: number;
-        z: number;
-    };
-    bomb_beginplant: {
-        userid: number;
-        site: number;
-        userid_pawn: number;
-    };
-    bomb_abortplant: {
-        userid: number;
-        site: number;
-        userid_pawn: number;
-    };
-    bomb_planted: {
-        userid: number;
-        site: number;
-        userid_pawn: number;
-    };
-    bomb_begindefuse: {
-        userid: number;
-        haskit: boolean;
-        userid_pawn: number;
-    };
-    bomb_abortdefuse: {
-        userid: number;
-        userid_pawn: number;
-    };
-    bomb_defused: {
-        userid: number;
-        site: number;
-        userid_pawn: number;
-    };
-    bomb_exploded: {
-        userid: number;
-        site: number;
-        userid_pawn: number;
-    };
-    bomb_dropped: {
-        userid: number;
-        entindex: number;
-        userid_pawn: number;
-    };
-    bomb_pickup: {
-        userid: number;
-        userid_pawn: number;
-    };
-    bomb_beep: {
-        entindex: number;
-    };
-    defuser_dropped: {
-        entityid: number;
-    };
-    defuser_pickup: {
-        entityid: number;
-        userid: number;
-        userid_pawn: number;
-    };
-    hostage_follows: {
-        userid: number;
-        hostage: number;
-        userid_pawn: number;
-    };
-    hostage_hurt: {
-        userid: number;
-        hostage: number;
-        userid_pawn: number;
-    };
-    hostage_killed: {
-        userid: number;
-        hostage: number;
-        userid_pawn: number;
-    };
-    hostage_rescued: {
-        userid: number;
-        hostage: number;
-        site: number;
-        userid_pawn: number;
-    };
-    hostage_stops_following: {
-        userid: number;
-        hostage: number;
-        userid_pawn: number;
-    };
-    hostage_rescued_all: {};
-    hostage_call_for_help: {
-        hostage: number;
-    };
-    vip_escaped: {
-        userid: number;
-    };
-    vip_killed: {
-        userid: number;
-        attacker: number;
-    };
-    item_purchase: {
-        userid: number;
-        team: number;
-        loadout: number;
-        weapon: string;
-    };
-    item_pickup: {
-        userid: number;
-        item: string;
-        silent: boolean;
-        defindex: number;
-    };
-    item_pickup_slerp: {
-        userid: number;
-        index: number;
-        behavior: number;
-    };
-    item_pickup_failed: {
-        userid: number;
-        item: string;
-        reason: number;
-        limit: number;
-    };
-    item_remove: {
-        userid: number;
-        item: string;
-        defindex: number;
-    };
-    item_equip: {
-        userid: number;
-        item: string;
-        defindex: number;
-        canzoom: boolean;
-        hassilencer: boolean;
-        issilenced: boolean;
-        hastracers: boolean;
-        weptype: number;
-        ispainted: boolean;
-    };
-    item_schema_initialized: {};
-    ammo_pickup: {
-        userid: number;
-        item: string;
-        index: number;
-    };
-    ammo_refill: {
-        userid: number;
-        success: boolean;
-    };
-    enter_buyzone: {
-        userid: number;
-        canbuy: boolean;
-    };
-    exit_buyzone: {
-        userid: number;
-        canbuy: boolean;
-    };
-    enter_bombzone: {
-        userid: number;
-        hasbomb: boolean;
-        isplanted: boolean;
-    };
-    exit_bombzone: {
-        userid: number;
-        hasbomb: boolean;
-        isplanted: boolean;
-    };
-    enter_rescue_zone: {
-        userid: number;
-    };
-    exit_rescue_zone: {
-        userid: number;
-    };
-    buytime_ended: {};
-    silencer_off: {
-        userid: number;
-    };
-    silencer_on: {
-        userid: number;
-    };
-    silencer_detach: {
-        userid: number;
-        userid_pawn: number;
-    };
-    buymenu_open: {
-        userid: number;
-    };
-    buymenu_close: {
-        userid: number;
-    };
-    inspect_weapon: {
-        userid: number;
-        userid_pawn: number;
-    };
-    other_death: {
-        otherid: number;
-        othertype: string;
-        attacker: number;
-        weapon: string;
-        weapon_itemid: string;
-        weapon_fauxitemid: string;
-        weapon_originalowner_xuid: string;
-        headshot: boolean;
-        penetrated: number;
-        noscope: boolean;
-        thrusmoke: boolean;
-        attackerblind: boolean;
-    };
-    bullet_impact: {
-        userid: number;
-        x: number;
-        y: number;
-        z: number;
-        userid_pawn: number;
-    };
-    bullet_flight_resolution: {
-        userid: number;
-        userid_pawn: number;
-        pos_x: number;
-        pos_y: number;
-        pos_z: number;
-        ang_x: number;
-        ang_y: number;
-        ang_z: number;
-        start_x: number;
-        start_y: number;
-        start_z: number;
-    };
-    door_close: {
-        userid: number;
-        checkpoint: boolean;
-        userid_pawn: number;
-    };
-    door_moving: {
-        userid: number;
-        entindex: number;
-        userid_pawn: number;
-    };
-    door_break: {
-        entindex: number;
-        dmgstate: number;
-    };
-    door_closed: {
-        userid_pawn: number;
-        entindex: number;
-    };
-    door_open: {
-        userid_pawn: number;
-        entindex: number;
-    };
-    break_breakable: {
-        entindex: number;
-        userid: number;
-        material: number;
-        userid_pawn: number;
-    };
-    break_prop: {
-        entindex: number;
-        userid: number;
-        userid_pawn: number;
-    };
-    broken_breakable: {
-        entindex: number;
-        userid: number;
-        material: number;
-        userid_pawn: number;
-    };
-    entity_killed: {
-        entindex_killed: number;
-        entindex_attacker: number;
-        entindex_inflictor: number;
-        damagebits: number;
-    };
-    entity_visible: {
-        userid: number;
-        subject: number;
-        classname: string;
-        entityname: string;
-    };
-    vote_started: {
-        issue: string;
-        param1: string;
-        team: number;
-        initiator: number;
-    };
-    vote_failed: {
-        team: number;
-    };
-    vote_passed: {
-        details: string;
-        param1: string;
-        team: number;
-    };
-    vote_changed: {
-        vote_option1: number;
-        vote_option2: number;
-        vote_option3: number;
-        vote_option4: number;
-        vote_option5: number;
-        potentialVotes: number;
-    };
-    vote_cast_yes: {
-        team: number;
-        entityid: number;
-    };
-    vote_cast_no: {
-        team: number;
-        entityid: number;
-    };
-    vote_cast: {
-        vote_option: number;
-        team: number;
-        userid: number;
-    };
-    vote_ended: {};
-    vote_options: {
-        count: number;
-        option1: string;
-        option2: string;
-        option3: string;
-        option4: string;
-        option5: string;
-    };
-    start_vote: {
-        userid: number;
-        type: number;
-        vote_parameter: number;
-    };
-    enable_restart_voting: {
-        enable: boolean;
-    };
-    achievement_event: {
-        achievement_name: string;
-        cur_val: number;
-        max_val: number;
-    };
-    achievement_earned: {
-        player: number;
-        achievement: number;
-    };
-    achievement_earned_local: {
-        achievement: number;
-        splitscreenplayer: number;
-    };
-    achievement_write_failed: {};
-    achievement_info_loaded: {};
-    bonus_updated: {
-        numadvanced: number;
-        numbronze: number;
-        numsilver: number;
-        numgold: number;
-    };
-    spec_target_updated: {
-        userid: number;
-        target: number;
-        userid_pawn: number;
-    };
-    spec_mode_updated: {
-        userid: number;
-    };
-    gameinstructor_draw: {};
-    gameinstructor_nodraw: {};
-    instructor_start_lesson: {
-        userid: number;
-        hint_name: string;
-        hint_target: number;
-        vr_movement_type: number;
-        vr_single_controller: boolean;
-        vr_controller_type: number;
-    };
-    instructor_close_lesson: {
-        userid: number;
-        hint_name: string;
-    };
-    instructor_server_hint_create: {
-        userid: number;
-        hint_name: string;
-        hint_replace_key: string;
-        hint_target: number;
-        hint_activator_userid: number;
-        hint_timeout: number;
-        hint_icon_onscreen: string;
-        hint_icon_offscreen: string;
-        hint_caption: string;
-        hint_activator_caption: string;
-        hint_color: string;
-        hint_icon_offset: number;
-        hint_range: number;
-        hint_flags: number;
-        hint_binding: string;
-        hint_gamepad_binding: string;
-        hint_allow_nodraw_target: boolean;
-        hint_nooffscreen: boolean;
-        hint_forcecaption: boolean;
-        hint_local_player_only: boolean;
-    };
-    instructor_server_hint_stop: {
-        hint_name: string;
-    };
-    clientside_lesson_closed: {
-        lesson_name: string;
-    };
-    set_instructor_group_enabled: {
-        group: string;
-        enabled: number;
-    };
-    physgun_pickup: {
-        target: number;
-    };
-    flare_ignite_npc: {
-        entindex: number;
-    };
-    helicopter_grenade_punt_miss: {};
-    finale_start: {
-        rushes: number;
-    };
-    user_data_downloaded: {};
-    read_game_titledata: {
-        controllerId: number;
-    };
-    write_game_titledata: {
-        controllerId: number;
-    };
-    reset_game_titledata: {
-        controllerId: number;
-    };
-    write_profile_data: {};
-    ragdoll_dissolved: {
-        entindex: number;
-    };
-    inventory_updated: {};
-    cart_updated: {};
-    store_pricesheet_updated: {};
-    drop_rate_modified: {};
-    event_ticket_modified: {};
-    gc_connected: {};
-    dynamic_shadow_light_changed: {};
-    gameui_hidden: {};
-    items_gifted: {
-        player: number;
-        itemdef: number;
-        numgifts: number;
-        giftidx: number;
-        accountid: number;
-    };
-    warmup_end: {};
-    announce_phase_end: {};
-    cs_intermission: {};
-    cs_game_disconnected: {};
-    cs_round_final_beep: {};
-    cs_round_start_beep: {};
-    cs_win_panel_round: {
-        show_timer_defend: boolean;
-        show_timer_attack: boolean;
-        timer_time: number;
-        final_event: number;
-        funfact_token: string;
-        funfact_player: number;
-        funfact_data1: number;
-        funfact_data2: number;
-        funfact_data3: number;
-    };
-    cs_win_panel_match: {};
-    cs_match_end_restart: {};
-    cs_pre_restart: {};
-    cs_prev_next_spectator: {
-        next: boolean;
-    };
-    show_deathpanel: {
-        victim: number;
-        killer: number;
-        killer_controller: number;
-        hits_taken: number;
-        damage_taken: number;
-        hits_given: number;
-        damage_given: number;
-        victim_pawn: number;
-    };
-    hide_deathpanel: {};
-    ugc_map_info_received: {
-        published_file_id: string;
-    };
-    ugc_map_unsubscribed: {
-        published_file_id: string;
-    };
-    ugc_map_download_error: {
-        published_file_id: string;
-        error_code: number;
-    };
-    ugc_file_download_finished: {
-        hcontent: string;
-    };
-    ugc_file_download_start: {
-        hcontent: string;
-        published_file_id: string;
-    };
-    begin_new_match: {};
-    match_end_conditions: {
-        frags: number;
-        max_rounds: number;
-        win_rounds: number;
-        time: number;
-    };
-    endmatch_mapvote_selecting_map: {
-        count: number;
-        slot1: number;
-        slot2: number;
-        slot3: number;
-        slot4: number;
-        slot5: number;
-        slot6: number;
-        slot7: number;
-        slot8: number;
-        slot9: number;
-        slot10: number;
-    };
-    endmatch_cmm_start_reveal_items: {};
-    nextlevel_changed: {
-        nextlevel: string;
-        mapgroup: string;
-        skirmishmode: string;
-    };
-    dm_bonus_weapon_start: {
-        time: number;
-        Pos: number;
-    };
-    gg_killed_enemy: {
-        victimid: number;
-        attackerid: number;
-        dominated: number;
-        revenge: number;
-        bonus: boolean;
-    };
-    switch_team: {
-        numPlayers: number;
-        numSpectators: number;
-        avg_rank: number;
-        numTSlotsFree: number;
-        numCTSlotsFree: number;
-    };
-    trial_time_expired: {
-        userid: number;
-    };
-    update_matchmaking_stats: {};
-    client_disconnect: {};
-    client_loadout_changed: {};
-    add_player_sonar_icon: {
-        userid: number;
-        pos_x: number;
-        pos_y: number;
-        pos_z: number;
-    };
-    add_bullet_hit_marker: {
-        userid: number;
-        bone: number;
-        pos_x: number;
-        pos_y: number;
-        pos_z: number;
-        ang_x: number;
-        ang_y: number;
-        ang_z: number;
-        start_x: number;
-        start_y: number;
-        start_z: number;
-        hit: boolean;
-    };
-    sfuievent: {
-        action: string;
-        data: string;
-        slot: number;
-    };
-    weaponhud_selection: {
-        userid: number;
-        mode: number;
-        entindex: number;
-        userid_pawn: number;
-    };
-    tr_player_flashbanged: {
-        userid: number;
-    };
-    tr_mark_complete: {
-        complete: number;
-    };
-    tr_mark_best_time: {
-        time: number;
-    };
-    tr_exit_hint_trigger: {};
-    tr_show_finish_msgbox: {};
-    tr_show_exit_msgbox: {};
-    bot_takeover: {
-        userid: number;
-        botid: number;
-        userid_pawn: number;
-    };
-    jointeam_failed: {
-        userid: number;
-        reason: number;
-    };
-    teamchange_pending: {
-        userid: number;
-        toteam: number;
-    };
-    material_default_complete: {};
-    seasoncoin_levelup: {
-        userid: number;
-        category: number;
-        rank: number;
-    };
-    tournament_reward: {
-        defindex: number;
-        totalrewards: number;
-        accountid: number;
-    };
-    start_halftime: {};
-    player_decal: {
-        userid: number;
-        userid_pawn: number;
-    };
-    survival_announce_phase: {
-        phase: number;
-    };
-    parachute_pickup: {
-        userid: number;
-    };
-    parachute_deploy: {
-        userid: number;
-    };
-    dronegun_attack: {
-        userid: number;
-    };
-    drone_dispatched: {
-        userid: number;
-        priority: number;
-        drone_dispatched: number;
-    };
-    loot_crate_visible: {
-        userid: number;
-        subject: number;
-        type: string;
-    };
-    loot_crate_opened: {
-        userid: number;
-        type: string;
-    };
-    open_crate_instr: {
-        userid: number;
-        subject: number;
-        type: string;
-    };
-    smoke_beacon_paradrop: {
-        userid: number;
-        paradrop: number;
-    };
-    survival_paradrop_spawn: {
-        entityid: number;
-    };
-    survival_paradrop_break: {
-        entityid: number;
-    };
-    drone_cargo_detached: {
-        userid: number;
-        cargo: number;
-        delivered: boolean;
-    };
-    drone_above_roof: {
-        userid: number;
-        cargo: number;
-    };
-    choppers_incoming_warning: {
-        global: boolean;
-    };
-    firstbombs_incoming_warning: {
-        global: boolean;
-    };
-    dz_item_interaction: {
-        userid: number;
-        subject: number;
-        type: string;
-    };
-    survival_teammate_respawn: {
-        userid: number;
-    };
-    survival_no_respawns_warning: {
-        userid: number;
-    };
-    survival_no_respawns_final: {
-        userid: number;
-    };
-    show_survival_respawn_status: {
-        loc_token: string;
-        duration: number;
-        userid: number;
-        userid_pawn: number;
-    };
-    guardian_wave_restart: {};
-    nav_blocked: {
-        area: number;
-        blocked: boolean;
-    };
-    nav_generate: {};
-    repost_xbox_achievements: {
-        splitscreenplayer: number;
-    };
-    mb_input_lock_success: {};
-    mb_input_lock_cancel: {};
-}
+const _handlers: Map<string, ((data: any) => void)[]> = new Map();
+let _registered = false;
 
-export class EventListeners {
-    private static registered = false;
-    private static handlers: Map<string, ((data: any) => void)[]> = new Map();
+export function RegisterAllEventListeners(): void {
+    if (_registered) {
+        css.Msg("[EventListeners] event listeners already registered");
+        return;
+    }
 
-    static RegisterAll(): void {
-        if (this.registered) {
-            css.Msg("event listeners already registered");
-            return;
-        }
+    const eventListeners = css.FindEntitiesByClass("logic_eventlistener");
 
-        const eventListeners = css.FindEntitiesByClass("logic_eventlistener");
+    eventListeners.forEach(listener => {
+        const eventName = listener.GetEntityName();
 
-        eventListeners.forEach(listener => {
-            const eventName = listener.GetEntityName();
+        css.ConnectOutput(listener, "OnEventFired", (data) => {
+            let value = {};
 
-            css.ConnectOutput(listener, "OnEventFired", (data) => {
-                let value = {};
+            if (typeof data?.value === "string") {
+                value = JSON.parse(data.value);
+            } else if (typeof data?.value === "object" && data.value !== null) {
+                value = data.value;
+            }
 
-                if (typeof data?.value === "string") {
-                    value = JSON.parse(data.value);
-                } else if (typeof data?.value === "object" && data.value !== null) {
-                    value = data.value;
-                }
-
-                this.TriggerEvent(eventName, value);
-            });
+            const handlers = _handlers.get(eventName);
+            if (handlers) {
+                handlers.forEach(handler => handler(value));
+            }
         });
+    });
 
-        this.registered = true;
-        css.Msg(`registered ${eventListeners.length} event listeners`);
-    }
-
-    private static TriggerEvent(eventName: string, data: any): void {
-        const handlers = this.handlers.get(eventName);
-        if (handlers) {
-            handlers.forEach(handler => handler(data));
-        }
-    }
-
-    private static On<K extends keyof GameEventDefs>(eventName: K, callback: (data: GameEventDefs[K]) => void): void {
-        if (!this.handlers.has(eventName as string)) {
-            this.handlers.set(eventName as string, []);
-        }
-        this.handlers.get(eventName as string)!.push(callback as (data: any) => void);
-    }
-
-    static OnServerSpawn(callback: (data: GameEventDefs["server_spawn"]) => void): void {
-        this.On("server_spawn", callback);
-    }
-
-    static OnServerPreShutdown(callback: (data: GameEventDefs["server_pre_shutdown"]) => void): void {
-        this.On("server_pre_shutdown", callback);
-    }
-
-    static OnServerShutdown(callback: (data: GameEventDefs["server_shutdown"]) => void): void {
-        this.On("server_shutdown", callback);
-    }
-
-    static OnServerMessage(callback: (data: GameEventDefs["server_message"]) => void): void {
-        this.On("server_message", callback);
-    }
-
-    static OnServerCvar(callback: (data: GameEventDefs["server_cvar"]) => void): void {
-        this.On("server_cvar", callback);
-    }
-    /**
-    * @deprecated Use `Instance.OnPlayerActivate` instead.
-    */
-    static OnPlayerActivate(callback: (data: GameEventDefs["player_activate"]) => void): void {
-        this.On("player_activate", callback);
-    }
-
-    static OnPlayerConnectFull(callback: (data: GameEventDefs["player_connect_full"]) => void): void {
-        this.On("player_connect_full", callback);
-    }
-
-    static OnPlayerFullUpdate(callback: (data: GameEventDefs["player_full_update"]) => void): void {
-        this.On("player_full_update", callback);
-    }
-    /**
-    * @deprecated Use `Instance.OnPlayerConnect` instead.
-    */
-    static OnPlayerConnect(callback: (data: GameEventDefs["player_connect"]) => void): void {
-        this.On("player_connect", callback);
-    }
-    /**
-    * @deprecated Use `Instance.OnPlayerDisconnect` instead.
-    */
-    static OnPlayerDisconnect(callback: (data: GameEventDefs["player_disconnect"]) => void): void {
-        this.On("player_disconnect", callback);
-    }
-
-    static OnPlayerInfo(callback: (data: GameEventDefs["player_info"]) => void): void {
-        this.On("player_info", callback);
-    }
-
-    static OnPlayerSpawn(callback: (data: GameEventDefs["player_spawn"]) => void): void {
-        this.On("player_spawn", callback);
-    }
-
-    static OnPlayerTeam(callback: (data: GameEventDefs["player_team"]) => void): void {
-        this.On("player_team", callback);
-    }
-
-    static OnLocalPlayerTeam(callback: (data: GameEventDefs["local_player_team"]) => void): void {
-        this.On("local_player_team", callback);
-    }
-
-    static OnLocalPlayerControllerTeam(callback: (data: GameEventDefs["local_player_controller_team"]) => void): void {
-        this.On("local_player_controller_team", callback);
-    }
-
-    static OnPlayerChangename(callback: (data: GameEventDefs["player_changename"]) => void): void {
-        this.On("player_changename", callback);
-    }
-
-    static OnPlayerHurt(callback: (data: GameEventDefs["player_hurt"]) => void): void {
-        this.On("player_hurt", callback);
-    }
-
-    static OnLocalPlayerPawnChanged(callback: (data: GameEventDefs["local_player_pawn_changed"]) => void): void {
-        this.On("local_player_pawn_changed", callback);
-    }
-
-    static OnPlayerStatsUpdated(callback: (data: GameEventDefs["player_stats_updated"]) => void): void {
-        this.On("player_stats_updated", callback);
-    }
-
-    static OnPlayerDeath(callback: (data: GameEventDefs["player_death"]) => void): void {
-        this.On("player_death", callback);
-    }
-
-    static OnPlayerFootstep(callback: (data: GameEventDefs["player_footstep"]) => void): void {
-        this.On("player_footstep", callback);
-    }
-
-    static OnPlayerHintmessage(callback: (data: GameEventDefs["player_hintmessage"]) => void): void {
-        this.On("player_hintmessage", callback);
-    }
-
-    static OnPlayerSpawned(callback: (data: GameEventDefs["player_spawned"]) => void): void {
-        this.On("player_spawned", callback);
-    }
-    /**
-    * @deprecated Use `Instance.OnPlayerJump` instead.
-    */
-    static OnPlayerJump(callback: (data: GameEventDefs["player_jump"]) => void): void {
-        this.On("player_jump", callback);
-    }
-
-    static OnPlayerBlind(callback: (data: GameEventDefs["player_blind"]) => void): void {
-        this.On("player_blind", callback);
-    }
-
-    static OnPlayerFalldamage(callback: (data: GameEventDefs["player_falldamage"]) => void): void {
-        this.On("player_falldamage", callback);
-    }
-
-    static OnPlayerScore(callback: (data: GameEventDefs["player_score"]) => void): void {
-        this.On("player_score", callback);
-    }
-
-    static OnPlayerShoot(callback: (data: GameEventDefs["player_shoot"]) => void): void {
-        this.On("player_shoot", callback);
-    }
-
-    static OnPlayerRadio(callback: (data: GameEventDefs["player_radio"]) => void): void {
-        this.On("player_radio", callback);
-    }
-
-    static OnPlayerAvengedTeammate(callback: (data: GameEventDefs["player_avenged_teammate"]) => void): void {
-        this.On("player_avenged_teammate", callback);
-    }
-
-    static OnPlayerResetVote(callback: (data: GameEventDefs["player_reset_vote"]) => void): void {
-        this.On("player_reset_vote", callback);
-    }
-
-    static OnPlayerGivenC4(callback: (data: GameEventDefs["player_given_c4"]) => void): void {
-        this.On("player_given_c4", callback);
-    }
-    /**
-    * @deprecated Use `Instance.OnPlayerPing` instead.
-    */
-    static OnPlayerPing(callback: (data: GameEventDefs["player_ping"]) => void): void {
-        this.On("player_ping", callback);
-    }
-
-    static OnPlayerPingStop(callback: (data: GameEventDefs["player_ping_stop"]) => void): void {
-        this.On("player_ping_stop", callback);
-    }
-
-    static OnPlayerSound(callback: (data: GameEventDefs["player_sound"]) => void): void {
-        this.On("player_sound", callback);
-    }
-
-    static OnTeamplayBroadcastAudio(callback: (data: GameEventDefs["teamplay_broadcast_audio"]) => void): void {
-        this.On("teamplay_broadcast_audio", callback);
-    }
-
-    static OnTeamInfo(callback: (data: GameEventDefs["team_info"]) => void): void {
-        this.On("team_info", callback);
-    }
-
-    static OnTeamScore(callback: (data: GameEventDefs["team_score"]) => void): void {
-        this.On("team_score", callback);
-    }
-
-    static OnTeamplayRoundStart(callback: (data: GameEventDefs["teamplay_round_start"]) => void): void {
-        this.On("teamplay_round_start", callback);
-    }
-
-    static OnTeamIntroStart(callback: (data: GameEventDefs["team_intro_start"]) => void): void {
-        this.On("team_intro_start", callback);
-    }
-
-    static OnTeamIntroEnd(callback: (data: GameEventDefs["team_intro_end"]) => void): void {
-        this.On("team_intro_end", callback);
-    }
-    /**
-    * @deprecated Use `Instance.OnRoundStart` instead.
-    */
-    static OnRoundStart(callback: (data: GameEventDefs["round_start"]) => void): void {
-        this.On("round_start", callback);
-    }
-
-    static OnRoundEnd(callback: (data: GameEventDefs["round_end"]) => void): void {
-        this.On("round_end", callback);
-    }
-
-    static OnRoundStartPreEntity(callback: (data: GameEventDefs["round_start_pre_entity"]) => void): void {
-        this.On("round_start_pre_entity", callback);
-    }
-
-    static OnRoundStartPostNav(callback: (data: GameEventDefs["round_start_post_nav"]) => void): void {
-        this.On("round_start_post_nav", callback);
-    }
-
-    static OnRoundFreezeEnd(callback: (data: GameEventDefs["round_freeze_end"]) => void): void {
-        this.On("round_freeze_end", callback);
-    }
-
-    static OnRoundPrestart(callback: (data: GameEventDefs["round_prestart"]) => void): void {
-        this.On("round_prestart", callback);
-    }
-
-    static OnRoundPoststart(callback: (data: GameEventDefs["round_poststart"]) => void): void {
-        this.On("round_poststart", callback);
-    }
-
-    static OnRoundAnnounceMatchPoint(callback: (data: GameEventDefs["round_announce_match_point"]) => void): void {
-        this.On("round_announce_match_point", callback);
-    }
-
-    static OnRoundAnnounceFinal(callback: (data: GameEventDefs["round_announce_final"]) => void): void {
-        this.On("round_announce_final", callback);
-    }
-
-    static OnRoundAnnounceLastRoundHalf(callback: (data: GameEventDefs["round_announce_last_round_half"]) => void): void {
-        this.On("round_announce_last_round_half", callback);
-    }
-
-    static OnRoundAnnounceMatchStart(callback: (data: GameEventDefs["round_announce_match_start"]) => void): void {
-        this.On("round_announce_match_start", callback);
-    }
-
-    static OnRoundAnnounceWarmup(callback: (data: GameEventDefs["round_announce_warmup"]) => void): void {
-        this.On("round_announce_warmup", callback);
-    }
-
-    static OnRoundEndUploadStats(callback: (data: GameEventDefs["round_end_upload_stats"]) => void): void {
-        this.On("round_end_upload_stats", callback);
-    }
-
-    static OnRoundOfficiallyEnded(callback: (data: GameEventDefs["round_officially_ended"]) => void): void {
-        this.On("round_officially_ended", callback);
-    }
-
-    static OnRoundTimeWarning(callback: (data: GameEventDefs["round_time_warning"]) => void): void {
-        this.On("round_time_warning", callback);
-    }
-
-    static OnRoundMvp(callback: (data: GameEventDefs["round_mvp"]) => void): void {
-        this.On("round_mvp", callback);
-    }
-
-    static OnGameInit(callback: (data: GameEventDefs["game_init"]) => void): void {
-        this.On("game_init", callback);
-    }
-
-    static OnGameStart(callback: (data: GameEventDefs["game_start"]) => void): void {
-        this.On("game_start", callback);
-    }
-
-    static OnGameEnd(callback: (data: GameEventDefs["game_end"]) => void): void {
-        this.On("game_end", callback);
-    }
-
-    static OnGameMessage(callback: (data: GameEventDefs["game_message"]) => void): void {
-        this.On("game_message", callback);
-    }
-
-    static OnGameNewmap(callback: (data: GameEventDefs["game_newmap"]) => void): void {
-        this.On("game_newmap", callback);
-    }
-
-    static OnGamePhaseChanged(callback: (data: GameEventDefs["game_phase_changed"]) => void): void {
-        this.On("game_phase_changed", callback);
-    }
-
-    static OnHltvCameraman(callback: (data: GameEventDefs["hltv_cameraman"]) => void): void {
-        this.On("hltv_cameraman", callback);
-    }
-
-    static OnHltvChase(callback: (data: GameEventDefs["hltv_chase"]) => void): void {
-        this.On("hltv_chase", callback);
-    }
-
-    static OnHltvRankCamera(callback: (data: GameEventDefs["hltv_rank_camera"]) => void): void {
-        this.On("hltv_rank_camera", callback);
-    }
-
-    static OnHltvRankEntity(callback: (data: GameEventDefs["hltv_rank_entity"]) => void): void {
-        this.On("hltv_rank_entity", callback);
-    }
-
-    static OnHltvFixed(callback: (data: GameEventDefs["hltv_fixed"]) => void): void {
-        this.On("hltv_fixed", callback);
-    }
-
-    static OnHltvMessage(callback: (data: GameEventDefs["hltv_message"]) => void): void {
-        this.On("hltv_message", callback);
-    }
-
-    static OnHltvStatus(callback: (data: GameEventDefs["hltv_status"]) => void): void {
-        this.On("hltv_status", callback);
-    }
-
-    static OnHltvTitle(callback: (data: GameEventDefs["hltv_title"]) => void): void {
-        this.On("hltv_title", callback);
-    }
-
-    static OnHltvChat(callback: (data: GameEventDefs["hltv_chat"]) => void): void {
-        this.On("hltv_chat", callback);
-    }
-
-    static OnHltvVersioninfo(callback: (data: GameEventDefs["hltv_versioninfo"]) => void): void {
-        this.On("hltv_versioninfo", callback);
-    }
-
-    static OnHltvReplay(callback: (data: GameEventDefs["hltv_replay"]) => void): void {
-        this.On("hltv_replay", callback);
-    }
-
-    static OnHltvChangedMode(callback: (data: GameEventDefs["hltv_changed_mode"]) => void): void {
-        this.On("hltv_changed_mode", callback);
-    }
-
-    static OnHltvReplayStatus(callback: (data: GameEventDefs["hltv_replay_status"]) => void): void {
-        this.On("hltv_replay_status", callback);
-    }
-
-    static OnDemoStart(callback: (data: GameEventDefs["demo_start"]) => void): void {
-        this.On("demo_start", callback);
-    }
-
-    static OnDemoStop(callback: (data: GameEventDefs["demo_stop"]) => void): void {
-        this.On("demo_stop", callback);
-    }
-
-    static OnDemoSkip(callback: (data: GameEventDefs["demo_skip"]) => void): void {
-        this.On("demo_skip", callback);
-    }
-
-    static OnMapShutdown(callback: (data: GameEventDefs["map_shutdown"]) => void): void {
-        this.On("map_shutdown", callback);
-    }
-
-    static OnMapTransition(callback: (data: GameEventDefs["map_transition"]) => void): void {
-        this.On("map_transition", callback);
-    }
-
-    static OnHostnameChanged(callback: (data: GameEventDefs["hostname_changed"]) => void): void {
-        this.On("hostname_changed", callback);
-    }
-
-    static OnDifficultyChanged(callback: (data: GameEventDefs["difficulty_changed"]) => void): void {
-        this.On("difficulty_changed", callback);
-    }
-    /**
-     * @deprecated Use `Instance.OnGunFire` instead. for meelee weapons use `Instance.OnKnifeAttack`
-     */
-    static OnWeaponFire(callback: (data: GameEventDefs["weapon_fire"]) => void): void {
-        this.On("weapon_fire", callback);
-    }
-
-    static OnWeaponFireOnEmpty(callback: (data: GameEventDefs["weapon_fire_on_empty"]) => void): void {
-        this.On("weapon_fire_on_empty", callback);
-    }
-
-    static OnWeaponOutofammo(callback: (data: GameEventDefs["weapon_outofammo"]) => void): void {
-        this.On("weapon_outofammo", callback);
-    }
-    /**
-    * @deprecated Use `Instance.OnGunReload` instead.
-    */
-    static OnWeaponReload(callback: (data: GameEventDefs["weapon_reload"]) => void): void {
-        this.On("weapon_reload", callback);
-    }
-
-    static OnWeaponZoom(callback: (data: GameEventDefs["weapon_zoom"]) => void): void {
-        this.On("weapon_zoom", callback);
-    }
-
-    static OnWeaponZoomRifle(callback: (data: GameEventDefs["weapon_zoom_rifle"]) => void): void {
-        this.On("weapon_zoom_rifle", callback);
-    }
-    /**
-    * @deprecated Use `Instance.OnGrenadeThrow` instead.
-    */
-    static OnGrenadeThrown(callback: (data: GameEventDefs["grenade_thrown"]) => void): void {
-        this.On("grenade_thrown", callback);
-    }
-    /**
-    * @deprecated Use `Instance.OnGrenadeBounce` instead.
-    */
-    static OnGrenadeBounce(callback: (data: GameEventDefs["grenade_bounce"]) => void): void {
-        this.On("grenade_bounce", callback);
-    }
-
-    static OnHegrenadeDetonate(callback: (data: GameEventDefs["hegrenade_detonate"]) => void): void {
-        this.On("hegrenade_detonate", callback);
-    }
-
-    static OnFlashbangDetonate(callback: (data: GameEventDefs["flashbang_detonate"]) => void): void {
-        this.On("flashbang_detonate", callback);
-    }
-
-    static OnSmokegrenadeDetonate(callback: (data: GameEventDefs["smokegrenade_detonate"]) => void): void {
-        this.On("smokegrenade_detonate", callback);
-    }
-
-    static OnSmokegrenadeExpired(callback: (data: GameEventDefs["smokegrenade_expired"]) => void): void {
-        this.On("smokegrenade_expired", callback);
-    }
-
-    static OnMolotovDetonate(callback: (data: GameEventDefs["molotov_detonate"]) => void): void {
-        this.On("molotov_detonate", callback);
-    }
-
-    static OnDecoyDetonate(callback: (data: GameEventDefs["decoy_detonate"]) => void): void {
-        this.On("decoy_detonate", callback);
-    }
-
-    static OnDecoyStarted(callback: (data: GameEventDefs["decoy_started"]) => void): void {
-        this.On("decoy_started", callback);
-    }
-
-    static OnDecoyFiring(callback: (data: GameEventDefs["decoy_firing"]) => void): void {
-        this.On("decoy_firing", callback);
-    }
-
-    static OnTagrenadeDetonate(callback: (data: GameEventDefs["tagrenade_detonate"]) => void): void {
-        this.On("tagrenade_detonate", callback);
-    }
-
-    static OnInfernoStartburn(callback: (data: GameEventDefs["inferno_startburn"]) => void): void {
-        this.On("inferno_startburn", callback);
-    }
-
-    static OnInfernoExpire(callback: (data: GameEventDefs["inferno_expire"]) => void): void {
-        this.On("inferno_expire", callback);
-    }
-
-    static OnInfernoExtinguish(callback: (data: GameEventDefs["inferno_extinguish"]) => void): void {
-        this.On("inferno_extinguish", callback);
-    }
-
-    static OnBombBeginplant(callback: (data: GameEventDefs["bomb_beginplant"]) => void): void {
-        this.On("bomb_beginplant", callback);
-    }
-
-    static OnBombAbortplant(callback: (data: GameEventDefs["bomb_abortplant"]) => void): void {
-        this.On("bomb_abortplant", callback);
-    }
-
-    static OnBombPlanted(callback: (data: GameEventDefs["bomb_planted"]) => void): void {
-        this.On("bomb_planted", callback);
-    }
-
-    static OnBombBegindefuse(callback: (data: GameEventDefs["bomb_begindefuse"]) => void): void {
-        this.On("bomb_begindefuse", callback);
-    }
-
-    static OnBombAbortdefuse(callback: (data: GameEventDefs["bomb_abortdefuse"]) => void): void {
-        this.On("bomb_abortdefuse", callback);
-    }
-
-    static OnBombDefused(callback: (data: GameEventDefs["bomb_defused"]) => void): void {
-        this.On("bomb_defused", callback);
-    }
-
-    static OnBombExploded(callback: (data: GameEventDefs["bomb_exploded"]) => void): void {
-        this.On("bomb_exploded", callback);
-    }
-
-    static OnBombDropped(callback: (data: GameEventDefs["bomb_dropped"]) => void): void {
-        this.On("bomb_dropped", callback);
-    }
-
-    static OnBombPickup(callback: (data: GameEventDefs["bomb_pickup"]) => void): void {
-        this.On("bomb_pickup", callback);
-    }
-
-    static OnBombBeep(callback: (data: GameEventDefs["bomb_beep"]) => void): void {
-        this.On("bomb_beep", callback);
-    }
-
-    static OnDefuserDropped(callback: (data: GameEventDefs["defuser_dropped"]) => void): void {
-        this.On("defuser_dropped", callback);
-    }
-
-    static OnDefuserPickup(callback: (data: GameEventDefs["defuser_pickup"]) => void): void {
-        this.On("defuser_pickup", callback);
-    }
-
-    static OnHostageFollows(callback: (data: GameEventDefs["hostage_follows"]) => void): void {
-        this.On("hostage_follows", callback);
-    }
-
-    static OnHostageHurt(callback: (data: GameEventDefs["hostage_hurt"]) => void): void {
-        this.On("hostage_hurt", callback);
-    }
-
-    static OnHostageKilled(callback: (data: GameEventDefs["hostage_killed"]) => void): void {
-        this.On("hostage_killed", callback);
-    }
-
-    static OnHostageRescued(callback: (data: GameEventDefs["hostage_rescued"]) => void): void {
-        this.On("hostage_rescued", callback);
-    }
-
-    static OnHostageStopsFollowing(callback: (data: GameEventDefs["hostage_stops_following"]) => void): void {
-        this.On("hostage_stops_following", callback);
-    }
-
-    static OnHostageRescuedAll(callback: (data: GameEventDefs["hostage_rescued_all"]) => void): void {
-        this.On("hostage_rescued_all", callback);
-    }
-
-    static OnHostageCallForHelp(callback: (data: GameEventDefs["hostage_call_for_help"]) => void): void {
-        this.On("hostage_call_for_help", callback);
-    }
-
-    static OnVipEscaped(callback: (data: GameEventDefs["vip_escaped"]) => void): void {
-        this.On("vip_escaped", callback);
-    }
-
-    static OnVipKilled(callback: (data: GameEventDefs["vip_killed"]) => void): void {
-        this.On("vip_killed", callback);
-    }
-
-    static OnItemPurchase(callback: (data: GameEventDefs["item_purchase"]) => void): void {
-        this.On("item_purchase", callback);
-    }
-
-    static OnItemPickup(callback: (data: GameEventDefs["item_pickup"]) => void): void {
-        this.On("item_pickup", callback);
-    }
-
-    static OnItemPickupSlerp(callback: (data: GameEventDefs["item_pickup_slerp"]) => void): void {
-        this.On("item_pickup_slerp", callback);
-    }
-
-    static OnItemPickupFailed(callback: (data: GameEventDefs["item_pickup_failed"]) => void): void {
-        this.On("item_pickup_failed", callback);
-    }
-
-    static OnItemRemove(callback: (data: GameEventDefs["item_remove"]) => void): void {
-        this.On("item_remove", callback);
-    }
-
-    static OnItemEquip(callback: (data: GameEventDefs["item_equip"]) => void): void {
-        this.On("item_equip", callback);
-    }
-
-    static OnItemSchemaInitialized(callback: (data: GameEventDefs["item_schema_initialized"]) => void): void {
-        this.On("item_schema_initialized", callback);
-    }
-
-    static OnAmmoPickup(callback: (data: GameEventDefs["ammo_pickup"]) => void): void {
-        this.On("ammo_pickup", callback);
-    }
-
-    static OnAmmoRefill(callback: (data: GameEventDefs["ammo_refill"]) => void): void {
-        this.On("ammo_refill", callback);
-    }
-
-    static OnEnterBuyzone(callback: (data: GameEventDefs["enter_buyzone"]) => void): void {
-        this.On("enter_buyzone", callback);
-    }
-
-    static OnExitBuyzone(callback: (data: GameEventDefs["exit_buyzone"]) => void): void {
-        this.On("exit_buyzone", callback);
-    }
-
-    static OnEnterBombzone(callback: (data: GameEventDefs["enter_bombzone"]) => void): void {
-        this.On("enter_bombzone", callback);
-    }
-
-    static OnExitBombzone(callback: (data: GameEventDefs["exit_bombzone"]) => void): void {
-        this.On("exit_bombzone", callback);
-    }
-
-    static OnEnterRescueZone(callback: (data: GameEventDefs["enter_rescue_zone"]) => void): void {
-        this.On("enter_rescue_zone", callback);
-    }
-
-    static OnExitRescueZone(callback: (data: GameEventDefs["exit_rescue_zone"]) => void): void {
-        this.On("exit_rescue_zone", callback);
-    }
-
-    static OnBuytimeEnded(callback: (data: GameEventDefs["buytime_ended"]) => void): void {
-        this.On("buytime_ended", callback);
-    }
-
-    static OnSilencerOff(callback: (data: GameEventDefs["silencer_off"]) => void): void {
-        this.On("silencer_off", callback);
-    }
-
-    static OnSilencerOn(callback: (data: GameEventDefs["silencer_on"]) => void): void {
-        this.On("silencer_on", callback);
-    }
-
-    static OnSilencerDetach(callback: (data: GameEventDefs["silencer_detach"]) => void): void {
-        this.On("silencer_detach", callback);
-    }
-
-    static OnBuymenuOpen(callback: (data: GameEventDefs["buymenu_open"]) => void): void {
-        this.On("buymenu_open", callback);
-    }
-
-    static OnBuymenuClose(callback: (data: GameEventDefs["buymenu_close"]) => void): void {
-        this.On("buymenu_close", callback);
-    }
-
-    static OnInspectWeapon(callback: (data: GameEventDefs["inspect_weapon"]) => void): void {
-        this.On("inspect_weapon", callback);
-    }
-
-    static OnOtherDeath(callback: (data: GameEventDefs["other_death"]) => void): void {
-        this.On("other_death", callback);
-    }
-    /**
-    * @deprecated Use `Instance.OnBulletImpact` instead.
-    */
-    static OnBulletImpact(callback: (data: GameEventDefs["bullet_impact"]) => void): void {
-        this.On("bullet_impact", callback);
-    }
-
-    static OnBulletFlightResolution(callback: (data: GameEventDefs["bullet_flight_resolution"]) => void): void {
-        this.On("bullet_flight_resolution", callback);
-    }
-
-    static OnDoorClose(callback: (data: GameEventDefs["door_close"]) => void): void {
-        this.On("door_close", callback);
-    }
-
-    static OnDoorMoving(callback: (data: GameEventDefs["door_moving"]) => void): void {
-        this.On("door_moving", callback);
-    }
-
-    static OnDoorBreak(callback: (data: GameEventDefs["door_break"]) => void): void {
-        this.On("door_break", callback);
-    }
-
-    static OnDoorClosed(callback: (data: GameEventDefs["door_closed"]) => void): void {
-        this.On("door_closed", callback);
-    }
-
-    static OnDoorOpen(callback: (data: GameEventDefs["door_open"]) => void): void {
-        this.On("door_open", callback);
-    }
-
-    static OnBreakBreakable(callback: (data: GameEventDefs["break_breakable"]) => void): void {
-        this.On("break_breakable", callback);
-    }
-
-    static OnBreakProp(callback: (data: GameEventDefs["break_prop"]) => void): void {
-        this.On("break_prop", callback);
-    }
-
-    static OnBrokenBreakable(callback: (data: GameEventDefs["broken_breakable"]) => void): void {
-        this.On("broken_breakable", callback);
-    }
-
-    static OnEntityKilled(callback: (data: GameEventDefs["entity_killed"]) => void): void {
-        this.On("entity_killed", callback);
-    }
-
-    static OnEntityVisible(callback: (data: GameEventDefs["entity_visible"]) => void): void {
-        this.On("entity_visible", callback);
-    }
-
-    static OnVoteStarted(callback: (data: GameEventDefs["vote_started"]) => void): void {
-        this.On("vote_started", callback);
-    }
-
-    static OnVoteFailed(callback: (data: GameEventDefs["vote_failed"]) => void): void {
-        this.On("vote_failed", callback);
-    }
-
-    static OnVotePassed(callback: (data: GameEventDefs["vote_passed"]) => void): void {
-        this.On("vote_passed", callback);
-    }
-
-    static OnVoteChanged(callback: (data: GameEventDefs["vote_changed"]) => void): void {
-        this.On("vote_changed", callback);
-    }
-
-    static OnVoteCastYes(callback: (data: GameEventDefs["vote_cast_yes"]) => void): void {
-        this.On("vote_cast_yes", callback);
-    }
-
-    static OnVoteCastNo(callback: (data: GameEventDefs["vote_cast_no"]) => void): void {
-        this.On("vote_cast_no", callback);
-    }
-
-    static OnVoteCast(callback: (data: GameEventDefs["vote_cast"]) => void): void {
-        this.On("vote_cast", callback);
-    }
-
-    static OnVoteEnded(callback: (data: GameEventDefs["vote_ended"]) => void): void {
-        this.On("vote_ended", callback);
-    }
-
-    static OnVoteOptions(callback: (data: GameEventDefs["vote_options"]) => void): void {
-        this.On("vote_options", callback);
-    }
-
-    static OnStartVote(callback: (data: GameEventDefs["start_vote"]) => void): void {
-        this.On("start_vote", callback);
-    }
-
-    static OnEnableRestartVoting(callback: (data: GameEventDefs["enable_restart_voting"]) => void): void {
-        this.On("enable_restart_voting", callback);
-    }
-
-    static OnAchievementEvent(callback: (data: GameEventDefs["achievement_event"]) => void): void {
-        this.On("achievement_event", callback);
-    }
-
-    static OnAchievementEarned(callback: (data: GameEventDefs["achievement_earned"]) => void): void {
-        this.On("achievement_earned", callback);
-    }
-
-    static OnAchievementEarnedLocal(callback: (data: GameEventDefs["achievement_earned_local"]) => void): void {
-        this.On("achievement_earned_local", callback);
-    }
-
-    static OnAchievementWriteFailed(callback: (data: GameEventDefs["achievement_write_failed"]) => void): void {
-        this.On("achievement_write_failed", callback);
-    }
-
-    static OnAchievementInfoLoaded(callback: (data: GameEventDefs["achievement_info_loaded"]) => void): void {
-        this.On("achievement_info_loaded", callback);
-    }
-
-    static OnBonusUpdated(callback: (data: GameEventDefs["bonus_updated"]) => void): void {
-        this.On("bonus_updated", callback);
-    }
-
-    static OnSpecTargetUpdated(callback: (data: GameEventDefs["spec_target_updated"]) => void): void {
-        this.On("spec_target_updated", callback);
-    }
-
-    static OnSpecModeUpdated(callback: (data: GameEventDefs["spec_mode_updated"]) => void): void {
-        this.On("spec_mode_updated", callback);
-    }
-
-    static OnGameinstructorDraw(callback: (data: GameEventDefs["gameinstructor_draw"]) => void): void {
-        this.On("gameinstructor_draw", callback);
-    }
-
-    static OnGameinstructorNodraw(callback: (data: GameEventDefs["gameinstructor_nodraw"]) => void): void {
-        this.On("gameinstructor_nodraw", callback);
-    }
-
-    static OnInstructorStartLesson(callback: (data: GameEventDefs["instructor_start_lesson"]) => void): void {
-        this.On("instructor_start_lesson", callback);
-    }
-
-    static OnInstructorCloseLesson(callback: (data: GameEventDefs["instructor_close_lesson"]) => void): void {
-        this.On("instructor_close_lesson", callback);
-    }
-
-    static OnInstructorServerHintCreate(callback: (data: GameEventDefs["instructor_server_hint_create"]) => void): void {
-        this.On("instructor_server_hint_create", callback);
-    }
-
-    static OnInstructorServerHintStop(callback: (data: GameEventDefs["instructor_server_hint_stop"]) => void): void {
-        this.On("instructor_server_hint_stop", callback);
-    }
-
-    static OnClientsideLessonClosed(callback: (data: GameEventDefs["clientside_lesson_closed"]) => void): void {
-        this.On("clientside_lesson_closed", callback);
-    }
-
-    static OnSetInstructorGroupEnabled(callback: (data: GameEventDefs["set_instructor_group_enabled"]) => void): void {
-        this.On("set_instructor_group_enabled", callback);
-    }
-
-    static OnPhysgunPickup(callback: (data: GameEventDefs["physgun_pickup"]) => void): void {
-        this.On("physgun_pickup", callback);
-    }
-
-    static OnFlareIgniteNpc(callback: (data: GameEventDefs["flare_ignite_npc"]) => void): void {
-        this.On("flare_ignite_npc", callback);
-    }
-
-    static OnHelicopterGrenadePuntMiss(callback: (data: GameEventDefs["helicopter_grenade_punt_miss"]) => void): void {
-        this.On("helicopter_grenade_punt_miss", callback);
-    }
-
-    static OnFinaleStart(callback: (data: GameEventDefs["finale_start"]) => void): void {
-        this.On("finale_start", callback);
-    }
-
-    static OnUserDataDownloaded(callback: (data: GameEventDefs["user_data_downloaded"]) => void): void {
-        this.On("user_data_downloaded", callback);
-    }
-
-    static OnReadGameTitledata(callback: (data: GameEventDefs["read_game_titledata"]) => void): void {
-        this.On("read_game_titledata", callback);
-    }
-
-    static OnWriteGameTitledata(callback: (data: GameEventDefs["write_game_titledata"]) => void): void {
-        this.On("write_game_titledata", callback);
-    }
-
-    static OnResetGameTitledata(callback: (data: GameEventDefs["reset_game_titledata"]) => void): void {
-        this.On("reset_game_titledata", callback);
-    }
-
-    static OnWriteProfileData(callback: (data: GameEventDefs["write_profile_data"]) => void): void {
-        this.On("write_profile_data", callback);
-    }
-
-    static OnRagdollDissolved(callback: (data: GameEventDefs["ragdoll_dissolved"]) => void): void {
-        this.On("ragdoll_dissolved", callback);
-    }
-
-    static OnInventoryUpdated(callback: (data: GameEventDefs["inventory_updated"]) => void): void {
-        this.On("inventory_updated", callback);
-    }
-
-    static OnCartUpdated(callback: (data: GameEventDefs["cart_updated"]) => void): void {
-        this.On("cart_updated", callback);
-    }
-
-    static OnStorePricesheetUpdated(callback: (data: GameEventDefs["store_pricesheet_updated"]) => void): void {
-        this.On("store_pricesheet_updated", callback);
-    }
-
-    static OnDropRateModified(callback: (data: GameEventDefs["drop_rate_modified"]) => void): void {
-        this.On("drop_rate_modified", callback);
-    }
-
-    static OnEventTicketModified(callback: (data: GameEventDefs["event_ticket_modified"]) => void): void {
-        this.On("event_ticket_modified", callback);
-    }
-
-    static OnGcConnected(callback: (data: GameEventDefs["gc_connected"]) => void): void {
-        this.On("gc_connected", callback);
-    }
-
-    static OnDynamicShadowLightChanged(callback: (data: GameEventDefs["dynamic_shadow_light_changed"]) => void): void {
-        this.On("dynamic_shadow_light_changed", callback);
-    }
-
-    static OnGameuiHidden(callback: (data: GameEventDefs["gameui_hidden"]) => void): void {
-        this.On("gameui_hidden", callback);
-    }
-
-    static OnItemsGifted(callback: (data: GameEventDefs["items_gifted"]) => void): void {
-        this.On("items_gifted", callback);
-    }
-
-    static OnWarmupEnd(callback: (data: GameEventDefs["warmup_end"]) => void): void {
-        this.On("warmup_end", callback);
-    }
-
-    static OnAnnouncePhaseEnd(callback: (data: GameEventDefs["announce_phase_end"]) => void): void {
-        this.On("announce_phase_end", callback);
-    }
-
-    static OnCsIntermission(callback: (data: GameEventDefs["cs_intermission"]) => void): void {
-        this.On("cs_intermission", callback);
-    }
-
-    static OnCsGameDisconnected(callback: (data: GameEventDefs["cs_game_disconnected"]) => void): void {
-        this.On("cs_game_disconnected", callback);
-    }
-
-    static OnCsRoundFinalBeep(callback: (data: GameEventDefs["cs_round_final_beep"]) => void): void {
-        this.On("cs_round_final_beep", callback);
-    }
-
-    static OnCsRoundStartBeep(callback: (data: GameEventDefs["cs_round_start_beep"]) => void): void {
-        this.On("cs_round_start_beep", callback);
-    }
-
-    static OnCsWinPanelRound(callback: (data: GameEventDefs["cs_win_panel_round"]) => void): void {
-        this.On("cs_win_panel_round", callback);
-    }
-
-    static OnCsWinPanelMatch(callback: (data: GameEventDefs["cs_win_panel_match"]) => void): void {
-        this.On("cs_win_panel_match", callback);
-    }
-
-    static OnCsMatchEndRestart(callback: (data: GameEventDefs["cs_match_end_restart"]) => void): void {
-        this.On("cs_match_end_restart", callback);
-    }
-
-    static OnCsPreRestart(callback: (data: GameEventDefs["cs_pre_restart"]) => void): void {
-        this.On("cs_pre_restart", callback);
-    }
-
-    static OnCsPrevNextSpectator(callback: (data: GameEventDefs["cs_prev_next_spectator"]) => void): void {
-        this.On("cs_prev_next_spectator", callback);
-    }
-
-    static OnShowDeathpanel(callback: (data: GameEventDefs["show_deathpanel"]) => void): void {
-        this.On("show_deathpanel", callback);
-    }
-
-    static OnHideDeathpanel(callback: (data: GameEventDefs["hide_deathpanel"]) => void): void {
-        this.On("hide_deathpanel", callback);
-    }
-
-    static OnUgcMapInfoReceived(callback: (data: GameEventDefs["ugc_map_info_received"]) => void): void {
-        this.On("ugc_map_info_received", callback);
-    }
-
-    static OnUgcMapUnsubscribed(callback: (data: GameEventDefs["ugc_map_unsubscribed"]) => void): void {
-        this.On("ugc_map_unsubscribed", callback);
-    }
-
-    static OnUgcMapDownloadError(callback: (data: GameEventDefs["ugc_map_download_error"]) => void): void {
-        this.On("ugc_map_download_error", callback);
-    }
-
-    static OnUgcFileDownloadFinished(callback: (data: GameEventDefs["ugc_file_download_finished"]) => void): void {
-        this.On("ugc_file_download_finished", callback);
-    }
-
-    static OnUgcFileDownloadStart(callback: (data: GameEventDefs["ugc_file_download_start"]) => void): void {
-        this.On("ugc_file_download_start", callback);
-    }
-
-    static OnBeginNewMatch(callback: (data: GameEventDefs["begin_new_match"]) => void): void {
-        this.On("begin_new_match", callback);
-    }
-
-    static OnMatchEndConditions(callback: (data: GameEventDefs["match_end_conditions"]) => void): void {
-        this.On("match_end_conditions", callback);
-    }
-
-    static OnEndmatchMapvoteSelectingMap(callback: (data: GameEventDefs["endmatch_mapvote_selecting_map"]) => void): void {
-        this.On("endmatch_mapvote_selecting_map", callback);
-    }
-
-    static OnEndmatchCmmStartRevealItems(callback: (data: GameEventDefs["endmatch_cmm_start_reveal_items"]) => void): void {
-        this.On("endmatch_cmm_start_reveal_items", callback);
-    }
-
-    static OnNextlevelChanged(callback: (data: GameEventDefs["nextlevel_changed"]) => void): void {
-        this.On("nextlevel_changed", callback);
-    }
-
-    static OnDmBonusWeaponStart(callback: (data: GameEventDefs["dm_bonus_weapon_start"]) => void): void {
-        this.On("dm_bonus_weapon_start", callback);
-    }
-
-    static OnGgKilledEnemy(callback: (data: GameEventDefs["gg_killed_enemy"]) => void): void {
-        this.On("gg_killed_enemy", callback);
-    }
-
-    static OnSwitchTeam(callback: (data: GameEventDefs["switch_team"]) => void): void {
-        this.On("switch_team", callback);
-    }
-
-    static OnTrialTimeExpired(callback: (data: GameEventDefs["trial_time_expired"]) => void): void {
-        this.On("trial_time_expired", callback);
-    }
-
-    static OnUpdateMatchmakingStats(callback: (data: GameEventDefs["update_matchmaking_stats"]) => void): void {
-        this.On("update_matchmaking_stats", callback);
-    }
-
-    static OnClientDisconnect(callback: (data: GameEventDefs["client_disconnect"]) => void): void {
-        this.On("client_disconnect", callback);
-    }
-
-    static OnClientLoadoutChanged(callback: (data: GameEventDefs["client_loadout_changed"]) => void): void {
-        this.On("client_loadout_changed", callback);
-    }
-
-    static OnAddPlayerSonarIcon(callback: (data: GameEventDefs["add_player_sonar_icon"]) => void): void {
-        this.On("add_player_sonar_icon", callback);
-    }
-
-    static OnAddBulletHitMarker(callback: (data: GameEventDefs["add_bullet_hit_marker"]) => void): void {
-        this.On("add_bullet_hit_marker", callback);
-    }
-
-    static OnSfuievent(callback: (data: GameEventDefs["sfuievent"]) => void): void {
-        this.On("sfuievent", callback);
-    }
-
-    static OnWeaponhudSelection(callback: (data: GameEventDefs["weaponhud_selection"]) => void): void {
-        this.On("weaponhud_selection", callback);
-    }
-
-    static OnTrPlayerFlashbanged(callback: (data: GameEventDefs["tr_player_flashbanged"]) => void): void {
-        this.On("tr_player_flashbanged", callback);
-    }
-
-    static OnTrMarkComplete(callback: (data: GameEventDefs["tr_mark_complete"]) => void): void {
-        this.On("tr_mark_complete", callback);
-    }
-
-    static OnTrMarkBestTime(callback: (data: GameEventDefs["tr_mark_best_time"]) => void): void {
-        this.On("tr_mark_best_time", callback);
-    }
-
-    static OnTrExitHintTrigger(callback: (data: GameEventDefs["tr_exit_hint_trigger"]) => void): void {
-        this.On("tr_exit_hint_trigger", callback);
-    }
-
-    static OnTrShowFinishMsgbox(callback: (data: GameEventDefs["tr_show_finish_msgbox"]) => void): void {
-        this.On("tr_show_finish_msgbox", callback);
-    }
-
-    static OnTrShowExitMsgbox(callback: (data: GameEventDefs["tr_show_exit_msgbox"]) => void): void {
-        this.On("tr_show_exit_msgbox", callback);
-    }
-
-    static OnBotTakeover(callback: (data: GameEventDefs["bot_takeover"]) => void): void {
-        this.On("bot_takeover", callback);
-    }
-
-    static OnJointeamFailed(callback: (data: GameEventDefs["jointeam_failed"]) => void): void {
-        this.On("jointeam_failed", callback);
-    }
-
-    static OnTeamchangePending(callback: (data: GameEventDefs["teamchange_pending"]) => void): void {
-        this.On("teamchange_pending", callback);
-    }
-
-    static OnMaterialDefaultComplete(callback: (data: GameEventDefs["material_default_complete"]) => void): void {
-        this.On("material_default_complete", callback);
-    }
-
-    static OnSeasoncoinLevelup(callback: (data: GameEventDefs["seasoncoin_levelup"]) => void): void {
-        this.On("seasoncoin_levelup", callback);
-    }
-
-    static OnTournamentReward(callback: (data: GameEventDefs["tournament_reward"]) => void): void {
-        this.On("tournament_reward", callback);
-    }
-
-    static OnStartHalftime(callback: (data: GameEventDefs["start_halftime"]) => void): void {
-        this.On("start_halftime", callback);
-    }
-
-    static OnPlayerDecal(callback: (data: GameEventDefs["player_decal"]) => void): void {
-        this.On("player_decal", callback);
-    }
-
-    static OnSurvivalTeammateRespawn(callback: (data: GameEventDefs["survival_teammate_respawn"]) => void): void {
-        this.On("survival_teammate_respawn", callback);
-    }
-
-    static OnSurvivalNoRespawnsWarning(callback: (data: GameEventDefs["survival_no_respawns_warning"]) => void): void {
-        this.On("survival_no_respawns_warning", callback);
-    }
-
-    static OnSurvivalNoRespawnsFinal(callback: (data: GameEventDefs["survival_no_respawns_final"]) => void): void {
-        this.On("survival_no_respawns_final", callback);
-    }
-
-    static OnShowSurvivalRespawnStatus(callback: (data: GameEventDefs["show_survival_respawn_status"]) => void): void {
-        this.On("show_survival_respawn_status", callback);
-    }
-
-    static OnGuardianWaveRestart(callback: (data: GameEventDefs["guardian_wave_restart"]) => void): void {
-        this.On("guardian_wave_restart", callback);
-    }
-
-    static OnNavBlocked(callback: (data: GameEventDefs["nav_blocked"]) => void): void {
-        this.On("nav_blocked", callback);
-    }
-
-    static OnNavGenerate(callback: (data: GameEventDefs["nav_generate"]) => void): void {
-        this.On("nav_generate", callback);
-    }
-
-    static OnRepostXboxAchievements(callback: (data: GameEventDefs["repost_xbox_achievements"]) => void): void {
-        this.On("repost_xbox_achievements", callback);
-    }
-
-    static OnMbInputLockSuccess(callback: (data: GameEventDefs["mb_input_lock_success"]) => void): void {
-        this.On("mb_input_lock_success", callback);
-    }
-
-    static OnMbInputLockCancel(callback: (data: GameEventDefs["mb_input_lock_cancel"]) => void): void {
-        this.On("mb_input_lock_cancel", callback);
-    }
-
-    static OnDronegunAttack(callback: (data: GameEventDefs["dronegun_attack"]) => void): void {
-        this.On("dronegun_attack", callback);
-    }
-
-    static OnDroneDispatched(callback: (data: GameEventDefs["drone_dispatched"]) => void): void {
-        this.On("drone_dispatched", callback);
-    }
-
-    static OnDroneCargoDetached(callback: (data: GameEventDefs["drone_cargo_detached"]) => void): void {
-        this.On("drone_cargo_detached", callback);
-    }
-
-    static OnDroneAboveRoof(callback: (data: GameEventDefs["drone_above_roof"]) => void): void {
-        this.On("drone_above_roof", callback);
-    }
-
-    static OnLootCrateVisible(callback: (data: GameEventDefs["loot_crate_visible"]) => void): void {
-        this.On("loot_crate_visible", callback);
-    }
-
-    static OnLootCrateOpened(callback: (data: GameEventDefs["loot_crate_opened"]) => void): void {
-        this.On("loot_crate_opened", callback);
-    }
-
-    static OnOpenCrateInstructions(callback: (data: GameEventDefs["open_crate_instr"]) => void): void {
-        this.On("open_crate_instr", callback);
-    }
-
-    static OnSmokeBeaconParadrop(callback: (data: GameEventDefs["smoke_beacon_paradrop"]) => void): void {
-        this.On("smoke_beacon_paradrop", callback);
-    }
-
-    static OnSurvivalParadropSpawned(callback: (data: GameEventDefs["survival_paradrop_spawn"]) => void): void {
-        this.On("survival_paradrop_spawn", callback);
-    }
-
-    static OnSurvivalParadropBreak(callback: (data: GameEventDefs["survival_paradrop_break"]) => void): void {
-        this.On("survival_paradrop_break", callback);
-    }
-
-    static OnChoppersIncomingWarning(callback: (data: GameEventDefs["choppers_incoming_warning"]) => void): void {
-        this.On("choppers_incoming_warning", callback);
-    }
-
-    static OnFirstbombsIncomingWarning(callback: (data: GameEventDefs["firstbombs_incoming_warning"]) => void): void {
-        this.On("firstbombs_incoming_warning", callback);
-    }
-
-    static OnDzItemInteraction(callback: (data: GameEventDefs["dz_item_interaction"]) => void): void {
-        this.On("dz_item_interaction", callback);
-    }
-
-    static OnParachutePickup(callback: (data: GameEventDefs["parachute_pickup"]) => void): void {
-        this.On("parachute_pickup", callback);
-    }
-
-    static OnParachuteDeploy(callback: (data: GameEventDefs["parachute_deploy"]) => void): void {
-        this.On("parachute_deploy", callback);
-    }
-
-    static OnSurvivalAnnouncePhase(callback: (data: GameEventDefs["survival_announce_phase"]) => void): void {
-        this.On("survival_announce_phase", callback);
-    }
+    _registered = true;
+    css.Msg(`[EventListeners] registered ${eventListeners.length} event listeners`);
 }
+
+function _subscribe<T>(eventName: string, callback: (data: T) => void): void {
+    if (!_handlers.has(eventName)) {
+        _handlers.set(eventName, []);
+    }
+    _handlers.get(eventName)!.push(callback as (data: any) => void);
+}
+
+export type ServerSpawnEvent = { hostname: string; address: string; port: number; game: string; mapname: string; addonname: string; maxplayers: number; os: string; dedicated: boolean; password: boolean };
+export type ServerPreShutdownEvent = { reason: string };
+export type ServerShutdownEvent = { reason: string };
+export type ServerMessageEvent = { text: string };
+export type ServerCvarEvent = { cvarname: string; cvarvalue: string };
+export type PlayerActivateEvent = { userid: number };
+export type PlayerConnectFullEvent = { userid: number };
+export type PlayerFullUpdateEvent = { userid: number; count: number };
+export type PlayerConnectEvent = { name: string; userid: number; networkid: string; xuid: string; address: string; bot: boolean };
+export type PlayerDisconnectEvent = { userid: number; reason: number; name: string; networkid: string; xuid: string; PlayerID: number };
+export type PlayerInfoEvent = { name: string; userid: number; steamid: string; bot: boolean };
+export type PlayerSpawnEvent = { userid: number; userid_pawn: number };
+export type PlayerTeamEvent = { userid: number; team: number; oldteam: number; disconnect: boolean; silent: boolean; isbot: boolean; userid_pawn: number };
+export type LocalPlayerTeamEvent = {};
+export type LocalPlayerControllerTeamEvent = {};
+export type PlayerChangenameEvent = { userid: number; oldname: string; newname: string };
+export type PlayerHurtEvent = { userid: number; attacker: number; health: number; armor: number; weapon: string; dmg_health: number; dmg_armor: number; hitgroup: number; userid_pawn: number; attacker_pawn: number };
+export type LocalPlayerPawnChangedEvent = {};
+export type PlayerStatsUpdatedEvent = { forceupload: boolean };
+export type PlayerDeathEvent = { userid: number; attacker: number; assister: number; assistedflash: boolean; weapon: string; weapon_itemid: string; weapon_fauxitemid: string; weapon_originalowner_xuid: string; headshot: boolean; dominated: number; revenge: number; wipe: number; penetrated: number; noreplay: boolean; noscope: boolean; thrusmoke: boolean; attackerblind: boolean; distance: number; userid_pawn: number; attacker_pawn: number; assister_pawn: number; dmg_health: number; dmg_armor: number; hitgroup: number; attackerinair: boolean };
+export type PlayerFootstepEvent = { userid: number; userid_pawn: number };
+export type PlayerHintmessageEvent = { hintmessage: string };
+export type PlayerSpawnedEvent = { userid: number; inrestart: boolean; userid_pawn: number };
+export type PlayerJumpEvent = { userid: number };
+export type PlayerBlindEvent = { userid: number; attacker: number; entityid: number; blind_duration: number };
+export type PlayerFalldamageEvent = { userid: number; damage: number; userid_pawn: number };
+export type PlayerScoreEvent = { userid: number; kills: number; deaths: number; score: number };
+export type PlayerShootEvent = { userid: number; weapon: number; mode: number; userid_pawn: number };
+export type PlayerRadioEvent = { splitscreenplayer: number; userid: number; slot: number; userid_pawn: number };
+export type PlayerAvengedTeammateEvent = { avenger_id: number; avenged_player_id: number };
+export type PlayerResetVoteEvent = { userid: number; vote: boolean };
+export type PlayerGivenC4Event = { userid: number };
+export type PlayerPingEvent = { splitscreenplayer: number; userid: number; entityid: number; x: number; y: number; z: number; urgent: boolean; userid_pawn: number };
+export type PlayerPingStopEvent = { entityid: number };
+export type PlayerSoundEvent = { userid: number; radius: number; duration: number; step: boolean; userid_pawn: number };
+export type TeamplayBroadcastAudioEvent = { team: number; sound: string };
+export type TeamInfoEvent = { teamid: number; teamname: string };
+export type TeamScoreEvent = { teamid: number; score: number };
+export type TeamplayRoundStartEvent = { full_reset: boolean };
+export type TeamIntroStartEvent = {};
+export type TeamIntroEndEvent = {};
+export type RoundStartEvent = { timelimit: number; fraglimit: number; objective: string };
+export type RoundEndEvent = { winner: number; reason: number; message: string; legacy: number; player_count: number; nomusic: number };
+export type RoundStartPreEntityEvent = {};
+export type RoundStartPostNavEvent = {};
+export type RoundFreezeEndEvent = {};
+export type RoundPrestartEvent = {};
+export type RoundPoststartEvent = {};
+export type RoundAnnounceMatchPointEvent = {};
+export type RoundAnnounceFinalEvent = {};
+export type RoundAnnounceLastRoundHalfEvent = {};
+export type RoundAnnounceMatchStartEvent = {};
+export type RoundAnnounceWarmupEvent = {};
+export type RoundEndUploadStatsEvent = {};
+export type RoundOfficiallyEndedEvent = {};
+export type RoundTimeWarningEvent = {};
+export type RoundMvpEvent = { userid: number; reason: number; value: number; musickitmvps: number; nomusic: number; musickitid: number };
+export type GameInitEvent = {};
+export type GameStartEvent = { roundslimit: number; timelimit: number; fraglimit: number; objective: string };
+export type GameEndEvent = { winner: number };
+export type GameMessageEvent = { target: number; text: string };
+export type GameNewmapEvent = { mapname: string };
+export type GamePhaseChangedEvent = { new_phase: number };
+export type HltvCameramanEvent = { userid: number };
+export type HltvChaseEvent = { target1: number; target2: number; distance: number; theta: number; phi: number; inertia: number; ineye: number };
+export type HltvRankCameraEvent = { index: number; rank: number; target: number };
+export type HltvRankEntityEvent = { userid: number; rank: number; target: number };
+export type HltvFixedEvent = { posx: number; posy: number; posz: number; theta: number; phi: number; offset: number; fov: number; target: number };
+export type HltvMessageEvent = { text: string };
+export type HltvStatusEvent = { clients: number; slots: number; proxies: number; master: string };
+export type HltvTitleEvent = { text: string };
+export type HltvChatEvent = { text: string; steamID: string };
+export type HltvVersioninfoEvent = { version: number };
+export type HltvReplayEvent = { delay: number; reason: number };
+export type HltvChangedModeEvent = { oldmode: number; newmode: number; obs_target: number };
+export type HltvReplayStatusEvent = { reason: number };
+export type DemoStartEvent = {};
+export type DemoStopEvent = {};
+export type DemoSkipEvent = { playback_tick: number; skipto_tick: number };
+export type MapShutdownEvent = {};
+export type MapTransitionEvent = {};
+export type HostnameChangedEvent = { hostname: string };
+export type DifficultyChangedEvent = { newDifficulty: number; oldDifficulty: number; strDifficulty: string };
+export type WeaponFireEvent = { userid: number; weapon: string; silenced: boolean; userid_pawn: number };
+export type WeaponFireOnEmptyEvent = { userid: number; weapon: string; userid_pawn: number };
+export type WeaponOutofammoEvent = { userid: number; userid_pawn: number };
+export type WeaponReloadEvent = { userid: number; userid_pawn: number };
+export type WeaponZoomEvent = { userid: number; userid_pawn: number };
+export type WeaponZoomRifleEvent = { userid: number; userid_pawn: number };
+export type GrenadeThrownEvent = { userid: number; weapon: string; userid_pawn: number };
+export type GrenadeBounceEvent = { userid: number; userid_pawn: number };
+export type HegrenadeDetonateEvent = { userid: number; entityid: number; x: number; y: number; z: number; userid_pawn: number };
+export type FlashbangDetonateEvent = { userid: number; entityid: number; x: number; y: number; z: number; userid_pawn: number };
+export type SmokegrenadeDetonateEvent = { userid: number; entityid: number; x: number; y: number; z: number; userid_pawn: number };
+export type SmokegrenadeExpiredEvent = { userid: number; entityid: number; x: number; y: number; z: number; userid_pawn: number };
+export type MolotovDetonateEvent = { userid: number; x: number; y: number; z: number; userid_pawn: number };
+export type DecoyDetonateEvent = { userid: number; entityid: number; x: number; y: number; z: number; userid_pawn: number };
+export type DecoyStartedEvent = { userid: number; entityid: number; x: number; y: number; z: number; userid_pawn: number };
+export type DecoyFiringEvent = { userid: number; entityid: number; x: number; y: number; z: number; userid_pawn: number };
+export type TagrenadeDetonateEvent = { userid: number; entityid: number; x: number; y: number; z: number };
+export type InfernoStartburnEvent = { entityid: number; x: number; y: number; z: number };
+export type InfernoExpireEvent = { entityid: number; x: number; y: number; z: number };
+export type InfernoExtinguishEvent = { entityid: number; x: number; y: number; z: number };
+export type BombBeginplantEvent = { userid: number; site: number; userid_pawn: number };
+export type BombAbortplantEvent = { userid: number; site: number; userid_pawn: number };
+export type BombPlantedEvent = { userid: number; site: number; userid_pawn: number };
+export type BombBegindefuseEvent = { userid: number; haskit: boolean; userid_pawn: number };
+export type BombAbortdefuseEvent = { userid: number; userid_pawn: number };
+export type BombDefusedEvent = { userid: number; site: number; userid_pawn: number };
+export type BombExplodedEvent = { userid: number; site: number; userid_pawn: number };
+export type BombDroppedEvent = { userid: number; entindex: number; userid_pawn: number };
+export type BombPickupEvent = { userid: number; userid_pawn: number };
+export type BombBeepEvent = { entindex: number };
+export type DefuserDroppedEvent = { entityid: number };
+export type DefuserPickupEvent = { entityid: number; userid: number; userid_pawn: number };
+export type HostageFollowsEvent = { userid: number; hostage: number; userid_pawn: number };
+export type HostageHurtEvent = { userid: number; hostage: number; userid_pawn: number };
+export type HostageKilledEvent = { userid: number; hostage: number; userid_pawn: number };
+export type HostageRescuedEvent = { userid: number; hostage: number; site: number; userid_pawn: number };
+export type HostageStopsFollowingEvent = { userid: number; hostage: number; userid_pawn: number };
+export type HostageRescuedAllEvent = {};
+export type HostageCallForHelpEvent = { hostage: number };
+export type VipEscapedEvent = { userid: number };
+export type VipKilledEvent = { userid: number; attacker: number };
+export type ItemPurchaseEvent = { userid: number; team: number; loadout: number; weapon: string };
+export type ItemPickupEvent = { userid: number; item: string; silent: boolean; defindex: number };
+export type ItemPickupSlerpEvent = { userid: number; index: number; behavior: number };
+export type ItemPickupFailedEvent = { userid: number; item: string; reason: number; limit: number };
+export type ItemRemoveEvent = { userid: number; item: string; defindex: number };
+export type ItemEquipEvent = { userid: number; item: string; defindex: number; canzoom: boolean; hassilencer: boolean; issilenced: boolean; hastracers: boolean; weptype: number; ispainted: boolean };
+export type ItemSchemaInitializedEvent = {};
+export type AmmoPickupEvent = { userid: number; item: string; index: number };
+export type AmmoRefillEvent = { userid: number; success: boolean };
+export type EnterBuyzoneEvent = { userid: number; canbuy: boolean };
+export type ExitBuyzoneEvent = { userid: number; canbuy: boolean };
+export type EnterBombzoneEvent = { userid: number; hasbomb: boolean; isplanted: boolean };
+export type ExitBombzoneEvent = { userid: number; hasbomb: boolean; isplanted: boolean };
+export type EnterRescueZoneEvent = { userid: number };
+export type ExitRescueZoneEvent = { userid: number };
+export type BuytimeEndedEvent = {};
+export type SilencerOffEvent = { userid: number };
+export type SilencerOnEvent = { userid: number };
+export type SilencerDetachEvent = { userid: number; userid_pawn: number };
+export type BuymenuOpenEvent = { userid: number };
+export type BuymenuCloseEvent = { userid: number };
+export type InspectWeaponEvent = { userid: number; userid_pawn: number };
+export type OtherDeathEvent = { otherid: number; othertype: string; attacker: number; weapon: string; weapon_itemid: string; weapon_fauxitemid: string; weapon_originalowner_xuid: string; headshot: boolean; penetrated: number; noscope: boolean; thrusmoke: boolean; attackerblind: boolean };
+export type BulletImpactEvent = { userid: number; x: number; y: number; z: number; userid_pawn: number };
+export type BulletFlightResolutionEvent = { userid: number; userid_pawn: number; pos_x: number; pos_y: number; pos_z: number; ang_x: number; ang_y: number; ang_z: number; start_x: number; start_y: number; start_z: number };
+export type DoorCloseEvent = { userid: number; checkpoint: boolean; userid_pawn: number };
+export type DoorMovingEvent = { userid: number; entindex: number; userid_pawn: number };
+export type DoorBreakEvent = { entindex: number; dmgstate: number };
+export type DoorClosedEvent = { userid_pawn: number; entindex: number };
+export type DoorOpenEvent = { userid_pawn: number; entindex: number };
+export type BreakBreakableEvent = { entindex: number; userid: number; material: number; userid_pawn: number };
+export type BreakPropEvent = { entindex: number; userid: number; userid_pawn: number };
+export type BrokenBreakableEvent = { entindex: number; userid: number; material: number; userid_pawn: number };
+export type EntityKilledEvent = { entindex_killed: number; entindex_attacker: number; entindex_inflictor: number; damagebits: number };
+export type EntityVisibleEvent = { userid: number; subject: number; classname: string; entityname: string };
+export type VoteStartedEvent = { issue: string; param1: string; team: number; initiator: number };
+export type VoteFailedEvent = { team: number };
+export type VotePassedEvent = { details: string; param1: string; team: number };
+export type VoteChangedEvent = { vote_option1: number; vote_option2: number; vote_option3: number; vote_option4: number; vote_option5: number; potentialVotes: number };
+export type VoteCastYesEvent = { team: number; entityid: number };
+export type VoteCastNoEvent = { team: number; entityid: number };
+export type VoteCastEvent = { vote_option: number; team: number; userid: number };
+export type VoteEndedEvent = {};
+export type VoteOptionsEvent = { count: number; option1: string; option2: string; option3: string; option4: string; option5: string };
+export type StartVoteEvent = { userid: number; type: number; vote_parameter: number };
+export type EnableRestartVotingEvent = { enable: boolean };
+export type AchievementEventEvent = { achievement_name: string; cur_val: number; max_val: number };
+export type AchievementEarnedEvent = { player: number; achievement: number };
+export type AchievementEarnedLocalEvent = { achievement: number; splitscreenplayer: number };
+export type AchievementWriteFailedEvent = {};
+export type AchievementInfoLoadedEvent = {};
+export type BonusUpdatedEvent = { numadvanced: number; numbronze: number; numsilver: number; numgold: number };
+export type SpecTargetUpdatedEvent = { userid: number; target: number; userid_pawn: number };
+export type SpecModeUpdatedEvent = { userid: number };
+export type GameinstructorDrawEvent = {};
+export type GameinstructorNodrawEvent = {};
+export type InstructorStartLessonEvent = { userid: number; hint_name: string; hint_target: number; vr_movement_type: number; vr_single_controller: boolean; vr_controller_type: number };
+export type InstructorCloseLessonEvent = { userid: number; hint_name: string };
+export type InstructorServerHintCreateEvent = { userid: number; hint_name: string; hint_replace_key: string; hint_target: number; hint_activator_userid: number; hint_timeout: number; hint_icon_onscreen: string; hint_icon_offscreen: string; hint_caption: string; hint_activator_caption: string; hint_color: string; hint_icon_offset: number; hint_range: number; hint_flags: number; hint_binding: string; hint_gamepad_binding: string; hint_allow_nodraw_target: boolean; hint_nooffscreen: boolean; hint_forcecaption: boolean; hint_local_player_only: boolean };
+export type InstructorServerHintStopEvent = { hint_name: string };
+export type ClientsideLessonClosedEvent = { lesson_name: string };
+export type SetInstructorGroupEnabledEvent = { group: string; enabled: number };
+export type PhysgunPickupEvent = { target: number };
+export type FlareIgniteNpcEvent = { entindex: number };
+export type HelicopterGrenadePuntMissEvent = {};
+export type FinaleStartEvent = { rushes: number };
+export type UserDataDownloadedEvent = {};
+export type ReadGameTitledataEvent = { controllerId: number };
+export type WriteGameTitledataEvent = { controllerId: number };
+export type ResetGameTitledataEvent = { controllerId: number };
+export type WriteProfileDataEvent = {};
+export type RagdollDissolvedEvent = { entindex: number };
+export type InventoryUpdatedEvent = {};
+export type CartUpdatedEvent = {};
+export type StorePricesheetUpdatedEvent = {};
+export type DropRateModifiedEvent = {};
+export type EventTicketModifiedEvent = {};
+export type GcConnectedEvent = {};
+export type DynamicShadowLightChangedEvent = {};
+export type GameuiHiddenEvent = {};
+export type ItemsGiftedEvent = { player: number; itemdef: number; numgifts: number; giftidx: number; accountid: number };
+export type WarmupEndEvent = {};
+export type AnnouncePhaseEndEvent = {};
+export type CsIntermissionEvent = {};
+export type CsGameDisconnectedEvent = {};
+export type CsRoundFinalBeepEvent = {};
+export type CsRoundStartBeepEvent = {};
+export type CsWinPanelRoundEvent = { show_timer_defend: boolean; show_timer_attack: boolean; timer_time: number; final_event: number; funfact_token: string; funfact_player: number; funfact_data1: number; funfact_data2: number; funfact_data3: number };
+export type CsWinPanelMatchEvent = {};
+export type CsMatchEndRestartEvent = {};
+export type CsPreRestartEvent = {};
+export type CsPrevNextSpectatorEvent = { next: boolean };
+export type ShowDeathpanelEvent = { victim: number; killer: number; killer_controller: number; hits_taken: number; damage_taken: number; hits_given: number; damage_given: number; victim_pawn: number };
+export type HideDeathpanelEvent = {};
+export type UgcMapInfoReceivedEvent = { published_file_id: string };
+export type UgcMapUnsubscribedEvent = { published_file_id: string };
+export type UgcMapDownloadErrorEvent = { published_file_id: string; error_code: number };
+export type UgcFileDownloadFinishedEvent = { hcontent: string };
+export type UgcFileDownloadStartEvent = { hcontent: string; published_file_id: string };
+export type BeginNewMatchEvent = {};
+export type MatchEndConditionsEvent = { frags: number; max_rounds: number; win_rounds: number; time: number };
+export type EndmatchMapvoteSelectingMapEvent = { count: number; slot1: number; slot2: number; slot3: number; slot4: number; slot5: number; slot6: number; slot7: number; slot8: number; slot9: number; slot10: number };
+export type EndmatchCmmStartRevealItemsEvent = {};
+export type NextlevelChangedEvent = { nextlevel: string; mapgroup: string; skirmishmode: string };
+export type DmBonusWeaponStartEvent = { time: number; Pos: number };
+export type GgKilledEnemyEvent = { victimid: number; attackerid: number; dominated: number; revenge: number; bonus: boolean };
+export type SwitchTeamEvent = { numPlayers: number; numSpectators: number; avg_rank: number; numTSlotsFree: number; numCTSlotsFree: number };
+export type TrialTimeExpiredEvent = { userid: number };
+export type UpdateMatchmakingStatsEvent = {};
+export type ClientDisconnectEvent = {};
+export type ClientLoadoutChangedEvent = {};
+export type AddPlayerSonarIconEvent = { userid: number; pos_x: number; pos_y: number; pos_z: number };
+export type AddBulletHitMarkerEvent = { userid: number; bone: number; pos_x: number; pos_y: number; pos_z: number; ang_x: number; ang_y: number; ang_z: number; start_x: number; start_y: number; start_z: number; hit: boolean };
+export type SfuieventEvent = { action: string; data: string; slot: number };
+export type WeaponhudSelectionEvent = { userid: number; mode: number; entindex: number; userid_pawn: number };
+export type TrPlayerFlashbangedEvent = { userid: number };
+export type TrMarkCompleteEvent = { complete: number };
+export type TrMarkBestTimeEvent = { time: number };
+export type TrExitHintTriggerEvent = {};
+export type TrShowFinishMsgboxEvent = {};
+export type TrShowExitMsgboxEvent = {};
+export type BotTakeoverEvent = { userid: number; botid: number; userid_pawn: number };
+export type JointeamFailedEvent = { userid: number; reason: number };
+export type TeamchangePendingEvent = { userid: number; toteam: number };
+export type MaterialDefaultCompleteEvent = {};
+export type SeasoncoinLevelupEvent = { userid: number; category: number; rank: number };
+export type TournamentRewardEvent = { defindex: number; totalrewards: number; accountid: number };
+export type StartHalftimeEvent = {};
+export type PlayerDecalEvent = { userid: number; userid_pawn: number };
+export type SurvivalAnnouncePhaseEvent = { phase: number };
+export type ParachutePickupEvent = { userid: number };
+export type ParachuteDeployEvent = { userid: number };
+export type DronegunAttackEvent = { userid: number };
+export type DroneDispatchedEvent = { userid: number; priority: number; drone_dispatched: number };
+export type LootCrateVisibleEvent = { userid: number; subject: number; type: string };
+export type LootCrateOpenedEvent = { userid: number; type: string };
+export type OpenCrateInstrEvent = { userid: number; subject: number; type: string };
+export type SmokeBeaconParadropEvent = { userid: number; paradrop: number };
+export type SurvivalParadropSpawnEvent = { entityid: number };
+export type SurvivalParadropBreakEvent = { entityid: number };
+export type DroneCargoDetachedEvent = { userid: number; cargo: number; delivered: boolean };
+export type DroneAboveRoofEvent = { userid: number; cargo: number };
+export type ChoppersIncomingWarningEvent = { global: boolean };
+export type FirstbombsIncomingWarningEvent = { global: boolean };
+export type DzItemInteractionEvent = { userid: number; subject: number; type: string };
+export type SurvivalTeammateRespawnEvent = { userid: number };
+export type SurvivalNoRespawnsWarningEvent = { userid: number };
+export type SurvivalNoRespawnsFinalEvent = { userid: number };
+export type ShowSurvivalRespawnStatusEvent = { loc_token: string; duration: number; userid: number; userid_pawn: number };
+export type GuardianWaveRestartEvent = {};
+export type NavBlockedEvent = { area: number; blocked: boolean };
+export type NavGenerateEvent = {};
+export type RepostXboxAchievementsEvent = { splitscreenplayer: number };
+export type MbInputLockSuccessEvent = {};
+export type MbInputLockCancelEvent = {};
+
+export function OnServerSpawn(callback: (data: ServerSpawnEvent) => void): void { _subscribe("server_spawn", callback); }
+export function OnServerPreShutdown(callback: (data: ServerPreShutdownEvent) => void): void { _subscribe("server_pre_shutdown", callback); }
+export function OnServerShutdown(callback: (data: ServerShutdownEvent) => void): void { _subscribe("server_shutdown", callback); }
+export function OnServerMessage(callback: (data: ServerMessageEvent) => void): void { _subscribe("server_message", callback); }
+export function OnServerCvar(callback: (data: ServerCvarEvent) => void): void { _subscribe("server_cvar", callback); }
+/** @deprecated Use `Instance.OnPlayerActivate` instead. */
+export function OnPlayerActivate(callback: (data: PlayerActivateEvent) => void): void { _subscribe("player_activate", callback); }
+export function OnPlayerConnectFull(callback: (data: PlayerConnectFullEvent) => void): void { _subscribe("player_connect_full", callback); }
+export function OnPlayerFullUpdate(callback: (data: PlayerFullUpdateEvent) => void): void { _subscribe("player_full_update", callback); }
+/** @deprecated Use `Instance.OnPlayerConnect` instead. */
+export function OnPlayerConnect(callback: (data: PlayerConnectEvent) => void): void { _subscribe("player_connect", callback); }
+/** @deprecated Use `Instance.OnPlayerDisconnect` instead. */
+export function OnPlayerDisconnect(callback: (data: PlayerDisconnectEvent) => void): void { _subscribe("player_disconnect", callback); }
+export function OnPlayerInfo(callback: (data: PlayerInfoEvent) => void): void { _subscribe("player_info", callback); }
+export function OnPlayerSpawn(callback: (data: PlayerSpawnEvent) => void): void { _subscribe("player_spawn", callback); }
+export function OnPlayerTeam(callback: (data: PlayerTeamEvent) => void): void { _subscribe("player_team", callback); }
+export function OnLocalPlayerTeam(callback: (data: LocalPlayerTeamEvent) => void): void { _subscribe("local_player_team", callback); }
+export function OnLocalPlayerControllerTeam(callback: (data: LocalPlayerControllerTeamEvent) => void): void { _subscribe("local_player_controller_team", callback); }
+export function OnPlayerChangename(callback: (data: PlayerChangenameEvent) => void): void { _subscribe("player_changename", callback); }
+export function OnPlayerHurt(callback: (data: PlayerHurtEvent) => void): void { _subscribe("player_hurt", callback); }
+export function OnLocalPlayerPawnChanged(callback: (data: LocalPlayerPawnChangedEvent) => void): void { _subscribe("local_player_pawn_changed", callback); }
+export function OnPlayerStatsUpdated(callback: (data: PlayerStatsUpdatedEvent) => void): void { _subscribe("player_stats_updated", callback); }
+export function OnPlayerDeath(callback: (data: PlayerDeathEvent) => void): void { _subscribe("player_death", callback); }
+export function OnPlayerFootstep(callback: (data: PlayerFootstepEvent) => void): void { _subscribe("player_footstep", callback); }
+export function OnPlayerHintmessage(callback: (data: PlayerHintmessageEvent) => void): void { _subscribe("player_hintmessage", callback); }
+export function OnPlayerSpawned(callback: (data: PlayerSpawnedEvent) => void): void { _subscribe("player_spawned", callback); }
+/** @deprecated Use `Instance.OnPlayerJump` instead. */
+export function OnPlayerJump(callback: (data: PlayerJumpEvent) => void): void { _subscribe("player_jump", callback); }
+export function OnPlayerBlind(callback: (data: PlayerBlindEvent) => void): void { _subscribe("player_blind", callback); }
+export function OnPlayerFalldamage(callback: (data: PlayerFalldamageEvent) => void): void { _subscribe("player_falldamage", callback); }
+export function OnPlayerScore(callback: (data: PlayerScoreEvent) => void): void { _subscribe("player_score", callback); }
+export function OnPlayerShoot(callback: (data: PlayerShootEvent) => void): void { _subscribe("player_shoot", callback); }
+export function OnPlayerRadio(callback: (data: PlayerRadioEvent) => void): void { _subscribe("player_radio", callback); }
+export function OnPlayerAvengedTeammate(callback: (data: PlayerAvengedTeammateEvent) => void): void { _subscribe("player_avenged_teammate", callback); }
+export function OnPlayerResetVote(callback: (data: PlayerResetVoteEvent) => void): void { _subscribe("player_reset_vote", callback); }
+export function OnPlayerGivenC4(callback: (data: PlayerGivenC4Event) => void): void { _subscribe("player_given_c4", callback); }
+/** @deprecated Use `Instance.OnPlayerPing` instead. */
+export function OnPlayerPing(callback: (data: PlayerPingEvent) => void): void { _subscribe("player_ping", callback); }
+export function OnPlayerPingStop(callback: (data: PlayerPingStopEvent) => void): void { _subscribe("player_ping_stop", callback); }
+export function OnPlayerSound(callback: (data: PlayerSoundEvent) => void): void { _subscribe("player_sound", callback); }
+export function OnTeamplayBroadcastAudio(callback: (data: TeamplayBroadcastAudioEvent) => void): void { _subscribe("teamplay_broadcast_audio", callback); }
+export function OnTeamInfo(callback: (data: TeamInfoEvent) => void): void { _subscribe("team_info", callback); }
+export function OnTeamScore(callback: (data: TeamScoreEvent) => void): void { _subscribe("team_score", callback); }
+export function OnTeamplayRoundStart(callback: (data: TeamplayRoundStartEvent) => void): void { _subscribe("teamplay_round_start", callback); }
+export function OnTeamIntroStart(callback: (data: TeamIntroStartEvent) => void): void { _subscribe("team_intro_start", callback); }
+export function OnTeamIntroEnd(callback: (data: TeamIntroEndEvent) => void): void { _subscribe("team_intro_end", callback); }
+/** @deprecated Use `Instance.OnRoundStart` instead. */
+export function OnRoundStart(callback: (data: RoundStartEvent) => void): void { _subscribe("round_start", callback); }
+export function OnRoundEnd(callback: (data: RoundEndEvent) => void): void { _subscribe("round_end", callback); }
+export function OnRoundStartPreEntity(callback: (data: RoundStartPreEntityEvent) => void): void { _subscribe("round_start_pre_entity", callback); }
+export function OnRoundStartPostNav(callback: (data: RoundStartPostNavEvent) => void): void { _subscribe("round_start_post_nav", callback); }
+export function OnRoundFreezeEnd(callback: (data: RoundFreezeEndEvent) => void): void { _subscribe("round_freeze_end", callback); }
+export function OnRoundPrestart(callback: (data: RoundPrestartEvent) => void): void { _subscribe("round_prestart", callback); }
+export function OnRoundPoststart(callback: (data: RoundPoststartEvent) => void): void { _subscribe("round_poststart", callback); }
+export function OnRoundAnnounceMatchPoint(callback: (data: RoundAnnounceMatchPointEvent) => void): void { _subscribe("round_announce_match_point", callback); }
+export function OnRoundAnnounceFinal(callback: (data: RoundAnnounceFinalEvent) => void): void { _subscribe("round_announce_final", callback); }
+export function OnRoundAnnounceLastRoundHalf(callback: (data: RoundAnnounceLastRoundHalfEvent) => void): void { _subscribe("round_announce_last_round_half", callback); }
+export function OnRoundAnnounceMatchStart(callback: (data: RoundAnnounceMatchStartEvent) => void): void { _subscribe("round_announce_match_start", callback); }
+export function OnRoundAnnounceWarmup(callback: (data: RoundAnnounceWarmupEvent) => void): void { _subscribe("round_announce_warmup", callback); }
+export function OnRoundEndUploadStats(callback: (data: RoundEndUploadStatsEvent) => void): void { _subscribe("round_end_upload_stats", callback); }
+export function OnRoundOfficiallyEnded(callback: (data: RoundOfficiallyEndedEvent) => void): void { _subscribe("round_officially_ended", callback); }
+export function OnRoundTimeWarning(callback: (data: RoundTimeWarningEvent) => void): void { _subscribe("round_time_warning", callback); }
+export function OnRoundMvp(callback: (data: RoundMvpEvent) => void): void { _subscribe("round_mvp", callback); }
+export function OnGameInit(callback: (data: GameInitEvent) => void): void { _subscribe("game_init", callback); }
+export function OnGameStart(callback: (data: GameStartEvent) => void): void { _subscribe("game_start", callback); }
+export function OnGameEnd(callback: (data: GameEndEvent) => void): void { _subscribe("game_end", callback); }
+export function OnGameMessage(callback: (data: GameMessageEvent) => void): void { _subscribe("game_message", callback); }
+export function OnGameNewmap(callback: (data: GameNewmapEvent) => void): void { _subscribe("game_newmap", callback); }
+export function OnGamePhaseChanged(callback: (data: GamePhaseChangedEvent) => void): void { _subscribe("game_phase_changed", callback); }
+export function OnHltvCameraman(callback: (data: HltvCameramanEvent) => void): void { _subscribe("hltv_cameraman", callback); }
+export function OnHltvChase(callback: (data: HltvChaseEvent) => void): void { _subscribe("hltv_chase", callback); }
+export function OnHltvRankCamera(callback: (data: HltvRankCameraEvent) => void): void { _subscribe("hltv_rank_camera", callback); }
+export function OnHltvRankEntity(callback: (data: HltvRankEntityEvent) => void): void { _subscribe("hltv_rank_entity", callback); }
+export function OnHltvFixed(callback: (data: HltvFixedEvent) => void): void { _subscribe("hltv_fixed", callback); }
+export function OnHltvMessage(callback: (data: HltvMessageEvent) => void): void { _subscribe("hltv_message", callback); }
+export function OnHltvStatus(callback: (data: HltvStatusEvent) => void): void { _subscribe("hltv_status", callback); }
+export function OnHltvTitle(callback: (data: HltvTitleEvent) => void): void { _subscribe("hltv_title", callback); }
+export function OnHltvChat(callback: (data: HltvChatEvent) => void): void { _subscribe("hltv_chat", callback); }
+export function OnHltvVersioninfo(callback: (data: HltvVersioninfoEvent) => void): void { _subscribe("hltv_versioninfo", callback); }
+export function OnHltvReplay(callback: (data: HltvReplayEvent) => void): void { _subscribe("hltv_replay", callback); }
+export function OnHltvChangedMode(callback: (data: HltvChangedModeEvent) => void): void { _subscribe("hltv_changed_mode", callback); }
+export function OnHltvReplayStatus(callback: (data: HltvReplayStatusEvent) => void): void { _subscribe("hltv_replay_status", callback); }
+export function OnDemoStart(callback: (data: DemoStartEvent) => void): void { _subscribe("demo_start", callback); }
+export function OnDemoStop(callback: (data: DemoStopEvent) => void): void { _subscribe("demo_stop", callback); }
+export function OnDemoSkip(callback: (data: DemoSkipEvent) => void): void { _subscribe("demo_skip", callback); }
+export function OnMapShutdown(callback: (data: MapShutdownEvent) => void): void { _subscribe("map_shutdown", callback); }
+export function OnMapTransition(callback: (data: MapTransitionEvent) => void): void { _subscribe("map_transition", callback); }
+export function OnHostnameChanged(callback: (data: HostnameChangedEvent) => void): void { _subscribe("hostname_changed", callback); }
+export function OnDifficultyChanged(callback: (data: DifficultyChangedEvent) => void): void { _subscribe("difficulty_changed", callback); }
+/** @deprecated Use `Instance.OnGunFire` instead. For melee weapons use `Instance.OnKnifeAttack` */
+export function OnWeaponFire(callback: (data: WeaponFireEvent) => void): void { _subscribe("weapon_fire", callback); }
+export function OnWeaponFireOnEmpty(callback: (data: WeaponFireOnEmptyEvent) => void): void { _subscribe("weapon_fire_on_empty", callback); }
+export function OnWeaponOutofammo(callback: (data: WeaponOutofammoEvent) => void): void { _subscribe("weapon_outofammo", callback); }
+/** @deprecated Use `Instance.OnGunReload` instead. */
+export function OnWeaponReload(callback: (data: WeaponReloadEvent) => void): void { _subscribe("weapon_reload", callback); }
+export function OnWeaponZoom(callback: (data: WeaponZoomEvent) => void): void { _subscribe("weapon_zoom", callback); }
+export function OnWeaponZoomRifle(callback: (data: WeaponZoomRifleEvent) => void): void { _subscribe("weapon_zoom_rifle", callback); }
+/** @deprecated Use `Instance.OnGrenadeThrow` instead. */
+export function OnGrenadeThrown(callback: (data: GrenadeThrownEvent) => void): void { _subscribe("grenade_thrown", callback); }
+/** @deprecated Use `Instance.OnGrenadeBounce` instead. */
+export function OnGrenadeBounce(callback: (data: GrenadeBounceEvent) => void): void { _subscribe("grenade_bounce", callback); }
+export function OnHegrenadeDetonate(callback: (data: HegrenadeDetonateEvent) => void): void { _subscribe("hegrenade_detonate", callback); }
+export function OnFlashbangDetonate(callback: (data: FlashbangDetonateEvent) => void): void { _subscribe("flashbang_detonate", callback); }
+export function OnSmokegrenadeDetonate(callback: (data: SmokegrenadeDetonateEvent) => void): void { _subscribe("smokegrenade_detonate", callback); }
+export function OnSmokegrenadeExpired(callback: (data: SmokegrenadeExpiredEvent) => void): void { _subscribe("smokegrenade_expired", callback); }
+export function OnMolotovDetonate(callback: (data: MolotovDetonateEvent) => void): void { _subscribe("molotov_detonate", callback); }
+export function OnDecoyDetonate(callback: (data: DecoyDetonateEvent) => void): void { _subscribe("decoy_detonate", callback); }
+export function OnDecoyStarted(callback: (data: DecoyStartedEvent) => void): void { _subscribe("decoy_started", callback); }
+export function OnDecoyFiring(callback: (data: DecoyFiringEvent) => void): void { _subscribe("decoy_firing", callback); }
+export function OnTagrenadeDetonate(callback: (data: TagrenadeDetonateEvent) => void): void { _subscribe("tagrenade_detonate", callback); }
+export function OnInfernoStartburn(callback: (data: InfernoStartburnEvent) => void): void { _subscribe("inferno_startburn", callback); }
+export function OnInfernoExpire(callback: (data: InfernoExpireEvent) => void): void { _subscribe("inferno_expire", callback); }
+export function OnInfernoExtinguish(callback: (data: InfernoExtinguishEvent) => void): void { _subscribe("inferno_extinguish", callback); }
+export function OnBombBeginplant(callback: (data: BombBeginplantEvent) => void): void { _subscribe("bomb_beginplant", callback); }
+export function OnBombAbortplant(callback: (data: BombAbortplantEvent) => void): void { _subscribe("bomb_abortplant", callback); }
+export function OnBombPlanted(callback: (data: BombPlantedEvent) => void): void { _subscribe("bomb_planted", callback); }
+export function OnBombBegindefuse(callback: (data: BombBegindefuseEvent) => void): void { _subscribe("bomb_begindefuse", callback); }
+export function OnBombAbortdefuse(callback: (data: BombAbortdefuseEvent) => void): void { _subscribe("bomb_abortdefuse", callback); }
+export function OnBombDefused(callback: (data: BombDefusedEvent) => void): void { _subscribe("bomb_defused", callback); }
+export function OnBombExploded(callback: (data: BombExplodedEvent) => void): void { _subscribe("bomb_exploded", callback); }
+export function OnBombDropped(callback: (data: BombDroppedEvent) => void): void { _subscribe("bomb_dropped", callback); }
+export function OnBombPickup(callback: (data: BombPickupEvent) => void): void { _subscribe("bomb_pickup", callback); }
+export function OnBombBeep(callback: (data: BombBeepEvent) => void): void { _subscribe("bomb_beep", callback); }
+export function OnDefuserDropped(callback: (data: DefuserDroppedEvent) => void): void { _subscribe("defuser_dropped", callback); }
+export function OnDefuserPickup(callback: (data: DefuserPickupEvent) => void): void { _subscribe("defuser_pickup", callback); }
+export function OnHostageFollows(callback: (data: HostageFollowsEvent) => void): void { _subscribe("hostage_follows", callback); }
+export function OnHostageHurt(callback: (data: HostageHurtEvent) => void): void { _subscribe("hostage_hurt", callback); }
+export function OnHostageKilled(callback: (data: HostageKilledEvent) => void): void { _subscribe("hostage_killed", callback); }
+export function OnHostageRescued(callback: (data: HostageRescuedEvent) => void): void { _subscribe("hostage_rescued", callback); }
+export function OnHostageStopsFollowing(callback: (data: HostageStopsFollowingEvent) => void): void { _subscribe("hostage_stops_following", callback); }
+export function OnHostageRescuedAll(callback: (data: HostageRescuedAllEvent) => void): void { _subscribe("hostage_rescued_all", callback); }
+export function OnHostageCallForHelp(callback: (data: HostageCallForHelpEvent) => void): void { _subscribe("hostage_call_for_help", callback); }
+export function OnVipEscaped(callback: (data: VipEscapedEvent) => void): void { _subscribe("vip_escaped", callback); }
+export function OnVipKilled(callback: (data: VipKilledEvent) => void): void { _subscribe("vip_killed", callback); }
+export function OnItemPurchase(callback: (data: ItemPurchaseEvent) => void): void { _subscribe("item_purchase", callback); }
+export function OnItemPickup(callback: (data: ItemPickupEvent) => void): void { _subscribe("item_pickup", callback); }
+export function OnItemPickupSlerp(callback: (data: ItemPickupSlerpEvent) => void): void { _subscribe("item_pickup_slerp", callback); }
+export function OnItemPickupFailed(callback: (data: ItemPickupFailedEvent) => void): void { _subscribe("item_pickup_failed", callback); }
+export function OnItemRemove(callback: (data: ItemRemoveEvent) => void): void { _subscribe("item_remove", callback); }
+export function OnItemEquip(callback: (data: ItemEquipEvent) => void): void { _subscribe("item_equip", callback); }
+export function OnItemSchemaInitialized(callback: (data: ItemSchemaInitializedEvent) => void): void { _subscribe("item_schema_initialized", callback); }
+export function OnAmmoPickup(callback: (data: AmmoPickupEvent) => void): void { _subscribe("ammo_pickup", callback); }
+export function OnAmmoRefill(callback: (data: AmmoRefillEvent) => void): void { _subscribe("ammo_refill", callback); }
+export function OnEnterBuyzone(callback: (data: EnterBuyzoneEvent) => void): void { _subscribe("enter_buyzone", callback); }
+export function OnExitBuyzone(callback: (data: ExitBuyzoneEvent) => void): void { _subscribe("exit_buyzone", callback); }
+export function OnEnterBombzone(callback: (data: EnterBombzoneEvent) => void): void { _subscribe("enter_bombzone", callback); }
+export function OnExitBombzone(callback: (data: ExitBombzoneEvent) => void): void { _subscribe("exit_bombzone", callback); }
+export function OnEnterRescueZone(callback: (data: EnterRescueZoneEvent) => void): void { _subscribe("enter_rescue_zone", callback); }
+export function OnExitRescueZone(callback: (data: ExitRescueZoneEvent) => void): void { _subscribe("exit_rescue_zone", callback); }
+export function OnBuytimeEnded(callback: (data: BuytimeEndedEvent) => void): void { _subscribe("buytime_ended", callback); }
+export function OnSilencerOff(callback: (data: SilencerOffEvent) => void): void { _subscribe("silencer_off", callback); }
+export function OnSilencerOn(callback: (data: SilencerOnEvent) => void): void { _subscribe("silencer_on", callback); }
+export function OnSilencerDetach(callback: (data: SilencerDetachEvent) => void): void { _subscribe("silencer_detach", callback); }
+export function OnBuymenuOpen(callback: (data: BuymenuOpenEvent) => void): void { _subscribe("buymenu_open", callback); }
+export function OnBuymenuClose(callback: (data: BuymenuCloseEvent) => void): void { _subscribe("buymenu_close", callback); }
+export function OnInspectWeapon(callback: (data: InspectWeaponEvent) => void): void { _subscribe("inspect_weapon", callback); }
+export function OnOtherDeath(callback: (data: OtherDeathEvent) => void): void { _subscribe("other_death", callback); }
+/** @deprecated Use `Instance.OnBulletImpact` instead. */
+export function OnBulletImpact(callback: (data: BulletImpactEvent) => void): void { _subscribe("bullet_impact", callback); }
+export function OnBulletFlightResolution(callback: (data: BulletFlightResolutionEvent) => void): void { _subscribe("bullet_flight_resolution", callback); }
+export function OnDoorClose(callback: (data: DoorCloseEvent) => void): void { _subscribe("door_close", callback); }
+export function OnDoorMoving(callback: (data: DoorMovingEvent) => void): void { _subscribe("door_moving", callback); }
+export function OnDoorBreak(callback: (data: DoorBreakEvent) => void): void { _subscribe("door_break", callback); }
+export function OnDoorClosed(callback: (data: DoorClosedEvent) => void): void { _subscribe("door_closed", callback); }
+export function OnDoorOpen(callback: (data: DoorOpenEvent) => void): void { _subscribe("door_open", callback); }
+export function OnBreakBreakable(callback: (data: BreakBreakableEvent) => void): void { _subscribe("break_breakable", callback); }
+export function OnBreakProp(callback: (data: BreakPropEvent) => void): void { _subscribe("break_prop", callback); }
+export function OnBrokenBreakable(callback: (data: BrokenBreakableEvent) => void): void { _subscribe("broken_breakable", callback); }
+export function OnEntityKilled(callback: (data: EntityKilledEvent) => void): void { _subscribe("entity_killed", callback); }
+export function OnEntityVisible(callback: (data: EntityVisibleEvent) => void): void { _subscribe("entity_visible", callback); }
+export function OnVoteStarted(callback: (data: VoteStartedEvent) => void): void { _subscribe("vote_started", callback); }
+export function OnVoteFailed(callback: (data: VoteFailedEvent) => void): void { _subscribe("vote_failed", callback); }
+export function OnVotePassed(callback: (data: VotePassedEvent) => void): void { _subscribe("vote_passed", callback); }
+export function OnVoteChanged(callback: (data: VoteChangedEvent) => void): void { _subscribe("vote_changed", callback); }
+export function OnVoteCastYes(callback: (data: VoteCastYesEvent) => void): void { _subscribe("vote_cast_yes", callback); }
+export function OnVoteCastNo(callback: (data: VoteCastNoEvent) => void): void { _subscribe("vote_cast_no", callback); }
+export function OnVoteCast(callback: (data: VoteCastEvent) => void): void { _subscribe("vote_cast", callback); }
+export function OnVoteEnded(callback: (data: VoteEndedEvent) => void): void { _subscribe("vote_ended", callback); }
+export function OnVoteOptions(callback: (data: VoteOptionsEvent) => void): void { _subscribe("vote_options", callback); }
+export function OnStartVote(callback: (data: StartVoteEvent) => void): void { _subscribe("start_vote", callback); }
+export function OnEnableRestartVoting(callback: (data: EnableRestartVotingEvent) => void): void { _subscribe("enable_restart_voting", callback); }
+export function OnAchievementEvent(callback: (data: AchievementEventEvent) => void): void { _subscribe("achievement_event", callback); }
+export function OnAchievementEarned(callback: (data: AchievementEarnedEvent) => void): void { _subscribe("achievement_earned", callback); }
+export function OnAchievementEarnedLocal(callback: (data: AchievementEarnedLocalEvent) => void): void { _subscribe("achievement_earned_local", callback); }
+export function OnAchievementWriteFailed(callback: (data: AchievementWriteFailedEvent) => void): void { _subscribe("achievement_write_failed", callback); }
+export function OnAchievementInfoLoaded(callback: (data: AchievementInfoLoadedEvent) => void): void { _subscribe("achievement_info_loaded", callback); }
+export function OnBonusUpdated(callback: (data: BonusUpdatedEvent) => void): void { _subscribe("bonus_updated", callback); }
+export function OnSpecTargetUpdated(callback: (data: SpecTargetUpdatedEvent) => void): void { _subscribe("spec_target_updated", callback); }
+export function OnSpecModeUpdated(callback: (data: SpecModeUpdatedEvent) => void): void { _subscribe("spec_mode_updated", callback); }
+export function OnGameinstructorDraw(callback: (data: GameinstructorDrawEvent) => void): void { _subscribe("gameinstructor_draw", callback); }
+export function OnGameinstructorNodraw(callback: (data: GameinstructorNodrawEvent) => void): void { _subscribe("gameinstructor_nodraw", callback); }
+export function OnInstructorStartLesson(callback: (data: InstructorStartLessonEvent) => void): void { _subscribe("instructor_start_lesson", callback); }
+export function OnInstructorCloseLesson(callback: (data: InstructorCloseLessonEvent) => void): void { _subscribe("instructor_close_lesson", callback); }
+export function OnInstructorServerHintCreate(callback: (data: InstructorServerHintCreateEvent) => void): void { _subscribe("instructor_server_hint_create", callback); }
+export function OnInstructorServerHintStop(callback: (data: InstructorServerHintStopEvent) => void): void { _subscribe("instructor_server_hint_stop", callback); }
+export function OnClientsideLessonClosed(callback: (data: ClientsideLessonClosedEvent) => void): void { _subscribe("clientside_lesson_closed", callback); }
+export function OnSetInstructorGroupEnabled(callback: (data: SetInstructorGroupEnabledEvent) => void): void { _subscribe("set_instructor_group_enabled", callback); }
+export function OnPhysgunPickup(callback: (data: PhysgunPickupEvent) => void): void { _subscribe("physgun_pickup", callback); }
+export function OnFlareIgniteNpc(callback: (data: FlareIgniteNpcEvent) => void): void { _subscribe("flare_ignite_npc", callback); }
+export function OnHelicopterGrenadePuntMiss(callback: (data: HelicopterGrenadePuntMissEvent) => void): void { _subscribe("helicopter_grenade_punt_miss", callback); }
+export function OnFinaleStart(callback: (data: FinaleStartEvent) => void): void { _subscribe("finale_start", callback); }
+export function OnUserDataDownloaded(callback: (data: UserDataDownloadedEvent) => void): void { _subscribe("user_data_downloaded", callback); }
+export function OnReadGameTitledata(callback: (data: ReadGameTitledataEvent) => void): void { _subscribe("read_game_titledata", callback); }
+export function OnWriteGameTitledata(callback: (data: WriteGameTitledataEvent) => void): void { _subscribe("write_game_titledata", callback); }
+export function OnResetGameTitledata(callback: (data: ResetGameTitledataEvent) => void): void { _subscribe("reset_game_titledata", callback); }
+export function OnWriteProfileData(callback: (data: WriteProfileDataEvent) => void): void { _subscribe("write_profile_data", callback); }
+export function OnRagdollDissolved(callback: (data: RagdollDissolvedEvent) => void): void { _subscribe("ragdoll_dissolved", callback); }
+export function OnInventoryUpdated(callback: (data: InventoryUpdatedEvent) => void): void { _subscribe("inventory_updated", callback); }
+export function OnCartUpdated(callback: (data: CartUpdatedEvent) => void): void { _subscribe("cart_updated", callback); }
+export function OnStorePricesheetUpdated(callback: (data: StorePricesheetUpdatedEvent) => void): void { _subscribe("store_pricesheet_updated", callback); }
+export function OnDropRateModified(callback: (data: DropRateModifiedEvent) => void): void { _subscribe("drop_rate_modified", callback); }
+export function OnEventTicketModified(callback: (data: EventTicketModifiedEvent) => void): void { _subscribe("event_ticket_modified", callback); }
+export function OnGcConnected(callback: (data: GcConnectedEvent) => void): void { _subscribe("gc_connected", callback); }
+export function OnDynamicShadowLightChanged(callback: (data: DynamicShadowLightChangedEvent) => void): void { _subscribe("dynamic_shadow_light_changed", callback); }
+export function OnGameuiHidden(callback: (data: GameuiHiddenEvent) => void): void { _subscribe("gameui_hidden", callback); }
+export function OnItemsGifted(callback: (data: ItemsGiftedEvent) => void): void { _subscribe("items_gifted", callback); }
+export function OnWarmupEnd(callback: (data: WarmupEndEvent) => void): void { _subscribe("warmup_end", callback); }
+export function OnAnnouncePhaseEnd(callback: (data: AnnouncePhaseEndEvent) => void): void { _subscribe("announce_phase_end", callback); }
+export function OnCsIntermission(callback: (data: CsIntermissionEvent) => void): void { _subscribe("cs_intermission", callback); }
+export function OnCsGameDisconnected(callback: (data: CsGameDisconnectedEvent) => void): void { _subscribe("cs_game_disconnected", callback); }
+export function OnCsRoundFinalBeep(callback: (data: CsRoundFinalBeepEvent) => void): void { _subscribe("cs_round_final_beep", callback); }
+export function OnCsRoundStartBeep(callback: (data: CsRoundStartBeepEvent) => void): void { _subscribe("cs_round_start_beep", callback); }
+export function OnCsWinPanelRound(callback: (data: CsWinPanelRoundEvent) => void): void { _subscribe("cs_win_panel_round", callback); }
+export function OnCsWinPanelMatch(callback: (data: CsWinPanelMatchEvent) => void): void { _subscribe("cs_win_panel_match", callback); }
+export function OnCsMatchEndRestart(callback: (data: CsMatchEndRestartEvent) => void): void { _subscribe("cs_match_end_restart", callback); }
+export function OnCsPreRestart(callback: (data: CsPreRestartEvent) => void): void { _subscribe("cs_pre_restart", callback); }
+export function OnCsPrevNextSpectator(callback: (data: CsPrevNextSpectatorEvent) => void): void { _subscribe("cs_prev_next_spectator", callback); }
+export function OnShowDeathpanel(callback: (data: ShowDeathpanelEvent) => void): void { _subscribe("show_deathpanel", callback); }
+export function OnHideDeathpanel(callback: (data: HideDeathpanelEvent) => void): void { _subscribe("hide_deathpanel", callback); }
+export function OnUgcMapInfoReceived(callback: (data: UgcMapInfoReceivedEvent) => void): void { _subscribe("ugc_map_info_received", callback); }
+export function OnUgcMapUnsubscribed(callback: (data: UgcMapUnsubscribedEvent) => void): void { _subscribe("ugc_map_unsubscribed", callback); }
+export function OnUgcMapDownloadError(callback: (data: UgcMapDownloadErrorEvent) => void): void { _subscribe("ugc_map_download_error", callback); }
+export function OnUgcFileDownloadFinished(callback: (data: UgcFileDownloadFinishedEvent) => void): void { _subscribe("ugc_file_download_finished", callback); }
+export function OnUgcFileDownloadStart(callback: (data: UgcFileDownloadStartEvent) => void): void { _subscribe("ugc_file_download_start", callback); }
+export function OnBeginNewMatch(callback: (data: BeginNewMatchEvent) => void): void { _subscribe("begin_new_match", callback); }
+export function OnMatchEndConditions(callback: (data: MatchEndConditionsEvent) => void): void { _subscribe("match_end_conditions", callback); }
+export function OnEndmatchMapvoteSelectingMap(callback: (data: EndmatchMapvoteSelectingMapEvent) => void): void { _subscribe("endmatch_mapvote_selecting_map", callback); }
+export function OnEndmatchCmmStartRevealItems(callback: (data: EndmatchCmmStartRevealItemsEvent) => void): void { _subscribe("endmatch_cmm_start_reveal_items", callback); }
+export function OnNextlevelChanged(callback: (data: NextlevelChangedEvent) => void): void { _subscribe("nextlevel_changed", callback); }
+export function OnDmBonusWeaponStart(callback: (data: DmBonusWeaponStartEvent) => void): void { _subscribe("dm_bonus_weapon_start", callback); }
+export function OnGgKilledEnemy(callback: (data: GgKilledEnemyEvent) => void): void { _subscribe("gg_killed_enemy", callback); }
+export function OnSwitchTeam(callback: (data: SwitchTeamEvent) => void): void { _subscribe("switch_team", callback); }
+export function OnTrialTimeExpired(callback: (data: TrialTimeExpiredEvent) => void): void { _subscribe("trial_time_expired", callback); }
+export function OnUpdateMatchmakingStats(callback: (data: UpdateMatchmakingStatsEvent) => void): void { _subscribe("update_matchmaking_stats", callback); }
+export function OnClientDisconnect(callback: (data: ClientDisconnectEvent) => void): void { _subscribe("client_disconnect", callback); }
+export function OnClientLoadoutChanged(callback: (data: ClientLoadoutChangedEvent) => void): void { _subscribe("client_loadout_changed", callback); }
+export function OnAddPlayerSonarIcon(callback: (data: AddPlayerSonarIconEvent) => void): void { _subscribe("add_player_sonar_icon", callback); }
+export function OnAddBulletHitMarker(callback: (data: AddBulletHitMarkerEvent) => void): void { _subscribe("add_bullet_hit_marker", callback); }
+export function OnSfuievent(callback: (data: SfuieventEvent) => void): void { _subscribe("sfuievent", callback); }
+export function OnWeaponhudSelection(callback: (data: WeaponhudSelectionEvent) => void): void { _subscribe("weaponhud_selection", callback); }
+export function OnTrPlayerFlashbanged(callback: (data: TrPlayerFlashbangedEvent) => void): void { _subscribe("tr_player_flashbanged", callback); }
+export function OnTrMarkComplete(callback: (data: TrMarkCompleteEvent) => void): void { _subscribe("tr_mark_complete", callback); }
+export function OnTrMarkBestTime(callback: (data: TrMarkBestTimeEvent) => void): void { _subscribe("tr_mark_best_time", callback); }
+export function OnTrExitHintTrigger(callback: (data: TrExitHintTriggerEvent) => void): void { _subscribe("tr_exit_hint_trigger", callback); }
+export function OnTrShowFinishMsgbox(callback: (data: TrShowFinishMsgboxEvent) => void): void { _subscribe("tr_show_finish_msgbox", callback); }
+export function OnTrShowExitMsgbox(callback: (data: TrShowExitMsgboxEvent) => void): void { _subscribe("tr_show_exit_msgbox", callback); }
+export function OnBotTakeover(callback: (data: BotTakeoverEvent) => void): void { _subscribe("bot_takeover", callback); }
+export function OnJointeamFailed(callback: (data: JointeamFailedEvent) => void): void { _subscribe("jointeam_failed", callback); }
+export function OnTeamchangePending(callback: (data: TeamchangePendingEvent) => void): void { _subscribe("teamchange_pending", callback); }
+export function OnMaterialDefaultComplete(callback: (data: MaterialDefaultCompleteEvent) => void): void { _subscribe("material_default_complete", callback); }
+export function OnSeasoncoinLevelup(callback: (data: SeasoncoinLevelupEvent) => void): void { _subscribe("seasoncoin_levelup", callback); }
+export function OnTournamentReward(callback: (data: TournamentRewardEvent) => void): void { _subscribe("tournament_reward", callback); }
+export function OnStartHalftime(callback: (data: StartHalftimeEvent) => void): void { _subscribe("start_halftime", callback); }
+export function OnPlayerDecal(callback: (data: PlayerDecalEvent) => void): void { _subscribe("player_decal", callback); }
+export function OnSurvivalAnnouncePhase(callback: (data: SurvivalAnnouncePhaseEvent) => void): void { _subscribe("survival_announce_phase", callback); }
+export function OnParachutePickup(callback: (data: ParachutePickupEvent) => void): void { _subscribe("parachute_pickup", callback); }
+export function OnParachuteDeploy(callback: (data: ParachuteDeployEvent) => void): void { _subscribe("parachute_deploy", callback); }
+export function OnDronegunAttack(callback: (data: DronegunAttackEvent) => void): void { _subscribe("dronegun_attack", callback); }
+export function OnDroneDispatched(callback: (data: DroneDispatchedEvent) => void): void { _subscribe("drone_dispatched", callback); }
+export function OnLootCrateVisible(callback: (data: LootCrateVisibleEvent) => void): void { _subscribe("loot_crate_visible", callback); }
+export function OnLootCrateOpened(callback: (data: LootCrateOpenedEvent) => void): void { _subscribe("loot_crate_opened", callback); }
+export function OnOpenCrateInstr(callback: (data: OpenCrateInstrEvent) => void): void { _subscribe("open_crate_instr", callback); }
+export function OnSmokeBeaconParadrop(callback: (data: SmokeBeaconParadropEvent) => void): void { _subscribe("smoke_beacon_paradrop", callback); }
+export function OnSurvivalParadropSpawn(callback: (data: SurvivalParadropSpawnEvent) => void): void { _subscribe("survival_paradrop_spawn", callback); }
+export function OnSurvivalParadropBreak(callback: (data: SurvivalParadropBreakEvent) => void): void { _subscribe("survival_paradrop_break", callback); }
+export function OnDroneCargoDetached(callback: (data: DroneCargoDetachedEvent) => void): void { _subscribe("drone_cargo_detached", callback); }
+export function OnDroneAboveRoof(callback: (data: DroneAboveRoofEvent) => void): void { _subscribe("drone_above_roof", callback); }
+export function OnChoppersIncomingWarning(callback: (data: ChoppersIncomingWarningEvent) => void): void { _subscribe("choppers_incoming_warning", callback); }
+export function OnFirstbombsIncomingWarning(callback: (data: FirstbombsIncomingWarningEvent) => void): void { _subscribe("firstbombs_incoming_warning", callback); }
+export function OnDzItemInteraction(callback: (data: DzItemInteractionEvent) => void): void { _subscribe("dz_item_interaction", callback); }
+export function OnSurvivalTeammateRespawn(callback: (data: SurvivalTeammateRespawnEvent) => void): void { _subscribe("survival_teammate_respawn", callback); }
+export function OnSurvivalNoRespawnsWarning(callback: (data: SurvivalNoRespawnsWarningEvent) => void): void { _subscribe("survival_no_respawns_warning", callback); }
+export function OnSurvivalNoRespawnsFinal(callback: (data: SurvivalNoRespawnsFinalEvent) => void): void { _subscribe("survival_no_respawns_final", callback); }
+export function OnShowSurvivalRespawnStatus(callback: (data: ShowSurvivalRespawnStatusEvent) => void): void { _subscribe("show_survival_respawn_status", callback); }
+export function OnGuardianWaveRestart(callback: (data: GuardianWaveRestartEvent) => void): void { _subscribe("guardian_wave_restart", callback); }
+export function OnNavBlocked(callback: (data: NavBlockedEvent) => void): void { _subscribe("nav_blocked", callback); }
+export function OnNavGenerate(callback: (data: NavGenerateEvent) => void): void { _subscribe("nav_generate", callback); }
+export function OnRepostXboxAchievements(callback: (data: RepostXboxAchievementsEvent) => void): void { _subscribe("repost_xbox_achievements", callback); }
+export function OnMbInputLockSuccess(callback: (data: MbInputLockSuccessEvent) => void): void { _subscribe("mb_input_lock_success", callback); }
+export function OnMbInputLockCancel(callback: (data: MbInputLockCancelEvent) => void): void { _subscribe("mb_input_lock_cancel", callback); }
