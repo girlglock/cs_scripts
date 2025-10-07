@@ -1,18 +1,20 @@
 import { Instance as css } from "cs_script/point_script";
-import { EventListeners } from './eventlisteners/eventlisteners';
+import { RegisterAllEventListeners, OnServerCvar, OnPlayerHurt } from "./eventlisteners/eventlisteners";
 import { blips } from "./blips/blips";
 import { HitGroup } from "./enums/hitgroups";
 
 css.OnActivate(() => {
-    EventListeners.RegisterAll();
+    RegisterAllEventListeners();
 });
 
-css.OnReload(() => {
-    EventListeners.RegisterAll();
+css.OnScriptReload({
+    after: () => {
+        RegisterAllEventListeners();
+    }
 });
 
 //kick the host if they try to change a nono cvar
-EventListeners.OnServerCvar((data) => {
+OnServerCvar((data) => {
     const bannedCvars = new Set([
         "sv_airaccelerate",
         "sv_jump_spam_penalty_time",
@@ -30,18 +32,12 @@ EventListeners.OnServerCvar((data) => {
 });
 
 //print hurt data using blips
-EventListeners.OnPlayerHurt((data) => {
+OnPlayerHurt((data) => {
     const attackerName = css.GetPlayerController(data.attacker)?.GetPlayerName();
     const victimName = css.GetPlayerController(data.userid)?.GetPlayerName();
     const limb = HitGroup[data.hitgroup];
 
-    const msg = `{red}${attackerName}{white} 
-              {red}[${data.weapon}]{white} 
-              {blue}${victimName}{white} (${limb})
-              | {yellow}DMG - HP:${data.dmg_health}  A:${data.dmg_armor}{white}
-              | {green}LEFT - HP:${data.health}  A:${data.armor}`
-        .trim()
-        .replace(/\s+/g, ' ');
+    const msg = `{red}${attackerName}{white}[${data.weapon}]{blue}${victimName}{white} (${limb}) | {yellow}DMG - HP:${data.dmg_health}  A:${data.dmg_armor}{white} | {green}LEFT - HP:${data.health}  A:${data.armor}`);
 
     blips.print(msg);
 });
