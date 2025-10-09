@@ -7,7 +7,7 @@ import {
     CSPlayerController
 } from "cs_script/point_script";
 
-import { blips } from "../.ext/blips/blips";
+import { blips } from "../_ext/blips/blips";
 
 const CONFIG = {
     THINK_INTERVAL: 1 / 64,

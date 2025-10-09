@@ -1,8 +1,8 @@
 import { CSPlayerController, CSPlayerPawn, Instance as css, Entity, PointTemplate, Vector, Color, Instance } from "cs_script/point_script";
 import { Vec3, Euler, Vector3Utils } from "@s2ze/math";
-import { RegisterAllEventListeners, OnPlayerSpawn, OnServerCvar, OnPlayerHurt } from '../.ext/eventlisteners/eventlisteners';
-import { blips } from "../.ext/blips/blips";
-import { HitGroup } from "../.ext/enums/hitgroups";
+import { RegisterAllEventListeners, OnPlayerSpawn, OnServerCvar, OnPlayerHurt } from '../_ext/eventlisteners/eventlisteners';
+import { blips } from "../_ext/blips/blips";
+import { HitGroup } from "../_ext/enums/hitgroups";
 
 import { Checkpoint, TrialData, GameMode, GroundState } from "./stuff/types";
 import { mapConfigs, MapName, config, nerdStuff } from "./stuff/configs";
